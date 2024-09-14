@@ -80,3 +80,9 @@ graph TD
 - CLI development
 - SaaS architecture
 - Web builder technologies
+
+## Run
+```bash
+chmod +x create.sh
+./create.sh
+```
