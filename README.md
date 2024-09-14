@@ -85,4 +85,7 @@ graph TD
 ```bash
 chmod +x create.sh
 ./create.sh
+
+chmod +x setup.sh
+./setup.sh
 ```

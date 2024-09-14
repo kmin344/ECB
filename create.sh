@@ -20,7 +20,7 @@ app.listen(PORT, () => console.log(\`API Gateway running on port \${PORT}\`));
 EOF
 
 cat << EOF > api-gateway/Dockerfile
-FROM node:14
+FROM node:16
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
@@ -53,7 +53,7 @@ EOF
 
     # Create Dockerfile for each service
     cat << EOF > services/$service/Dockerfile
-FROM node:14
+FROM node:16
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
