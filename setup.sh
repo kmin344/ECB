@@ -3,6 +3,95 @@
 # Navigate to project root
 cd ecommerce-boilerplate
 
+# Function to create route file
+create_route_file() {
+    local service=$1
+    local route_file="services/$service-service/src/routes/$service.routes.js"
+    echo "Creating route file for $service service"
+    mkdir -p "services/$service-service/src/routes"
+    cat << EOF > "$route_file"
+const express = require('express');
+const router = express.Router();
+
+router.get('/', (req, res) => {
+    res.status(501).json({ message: 'Get all ${service}s not implemented yet' });
+});
+
+router.get('/:id', (req, res) => {
+    res.status(501).json({ message: 'Get ${service} by id not implemented yet' });
+});
+
+router.post('/', (req, res) => {
+    res.status(501).json({ message: 'Create ${service} not implemented yet' });
+});
+
+router.put('/:id', (req, res) => {
+    res.status(501).json({ message: 'Update ${service} not implemented yet' });
+});
+
+router.delete('/:id', (req, res) => {
+    res.status(501).json({ message: 'Delete ${service} not implemented yet' });
+});
+
+module.exports = router;
+EOF
+}
+
+# Function to update app.js
+update_app_js() {
+    local service=$1
+    local app_file="services/$service-service/src/app.js"
+    echo "Updating app.js for $service service"
+    cat << EOF > "$app_file"
+const express = require('express');
+const mongoose = require('mongoose');
+const ${service}Routes = require('./routes/${service}.routes');
+
+const app = express();
+
+app.use(express.json());
+
+mongoose.connect('mongodb://mongo:27017/${service}-service', { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('Could not connect to MongoDB', err));
+
+app.use('/${service}s', ${service}Routes);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(\`${service^} service running on port \${PORT}\`));
+EOF
+}
+
+# Create route files and update app.js for each service
+for service in product order auth; do
+    create_route_file $service
+    update_app_js $service
+done
+
+# Special case for auth routes
+echo "Updating auth routes"
+cat << EOF > "services/auth-service/src/routes/auth.routes.js"
+const express = require('express');
+const router = express.Router();
+
+router.post('/register', (req, res) => {
+    res.status(501).json({ message: 'User registration not implemented yet' });
+});
+
+router.post('/login', (req, res) => {
+    res.status(501).json({ message: 'User login not implemented yet' });
+});
+
+router.post('/logout', (req, res) => {
+    res.status(501).json({ message: 'User logout not implemented yet' });
+});
+
+module.exports = router;
+EOF
+
+# Update auth service app.js
+sed -i 's|app.use('/auths', authRoutes);|app.use('/auth', authRoutes);|' services/auth-service/src/app.js
+
 # Install dependencies for each service
 services=("api-gateway" "services/product-service" "services/order-service" "services/auth-service")
 
@@ -21,115 +110,9 @@ do
     cd -
 done
 
-# Setup admin dashboard
-echo "Setting up admin dashboard"
-if [ -d "admin-dashboard" ]; then
-    echo "admin-dashboard directory already exists"
-    cd admin-dashboard
-    if [ ! -f "angular.json" ]; then
-        echo "Not a valid Angular project. Initializing new Angular project..."
-        cd ..
-        rm -rf admin-dashboard
-        npx @angular/cli new admin-dashboard --directory=admin-dashboard --routing=true --style=scss
-        cd admin-dashboard
-    fi
-else
-    echo "Creating new Angular project for admin dashboard"
-    npx @angular/cli new admin-dashboard --directory=admin-dashboard --routing=true --style=scss
-    cd admin-dashboard
-fi
-
-# Generate components and services if they don't exist
-components=("dashboard" "products" "orders")
-services=("product" "order" "auth")
-
-for component in "${components[@]}"
-do
-    if [ ! -d "src/app/components/$component" ]; then
-        ng generate component components/$component
-    else
-        echo "Component $component already exists"
-    fi
-done
-
-for service in "${services[@]}"
-do
-    if [ ! -f "src/app/services/$service.service.ts" ]; then
-        ng generate service services/$service
-    else
-        echo "Service $service already exists"
-    fi
-done
-
-# Update app-routing.module.ts
-cat << EOF > src/app/app-routing.module.ts
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { ProductsComponent } from './components/products/products.component';
-import { OrdersComponent } from './components/orders/orders.component';
-
-const routes: Routes = [
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'products', component: ProductsComponent },
-  { path: 'orders', component: OrdersComponent }
-];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule { }
-EOF
-
-# Update app.component.html
-cat << EOF > src/app/app.component.html
-<nav>
-  <ul>
-    <li><a routerLink="/dashboard">Dashboard</a></li>
-    <li><a routerLink="/products">Products</a></li>
-    <li><a routerLink="/orders">Orders</a></li>
-  </ul>
-</nav>
-<router-outlet></router-outlet>
-EOF
-
-cd ..
-
-# Function to update Dockerfile
-update_dockerfile() {
-    local service=$1
-    echo "Updating Dockerfile for $service"
-    cat << EOF > $service/Dockerfile
-FROM node:16
-WORKDIR /usr/src/app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["node", "src/app.js"]
-EOF
-}
-
-# Update Dockerfiles
-update_dockerfile "api-gateway"
-update_dockerfile "services/product-service"
-update_dockerfile "services/order-service"
-update_dockerfile "services/auth-service"
-
-# Adjust the EXPOSE port for api-gateway
-sed -i 's/EXPOSE 3000/EXPOSE 4000/' api-gateway/Dockerfile
-
-echo "Dockerfiles updated successfully"
-
 # Build and start Docker services
 docker-compose up --build -d
 
-# Start admin dashboard
-cd admin-dashboard
-npm start &
-
-echo "All services are now running!"
+echo "All services are now set up and running!"
 echo "Access the API Gateway at http://localhost:4000"
 echo "Access the Admin Dashboard at http://localhost:4200"
