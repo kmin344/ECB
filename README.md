@@ -3,6 +3,10 @@
 ## Project Overview
 Developed a comprehensive e-commerce boilerplate and framework to streamline the creation of e-commerce websites for various industries including fashion, art, high-end furniture, and food & beverage. The project aimed to address recurring needs in e-commerce development, reduce setup time, and enable non-technical users to manage the platform.
 
+## Project Overview
+Developed a comprehensive e-commerce boilerplate and framework to streamline the creation of e-commerce websites for various industries including fashion, art, high-end furniture, and food & beverage. The project aimed to address recurring needs in e-commerce development, reduce setup time, and enable non-technical users to manage the platform.
+
+
 ## Architecture
 ```mermaid
 graph TD
