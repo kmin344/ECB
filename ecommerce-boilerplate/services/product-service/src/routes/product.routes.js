@@ -1,47 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const Product = require('../models/product.model');
+const productController = require('../controllers/product.controller');
 
-router.get('/', async (req, res) => {
-  try {
-    const products = await Product.find();
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+// Create a new product
+router.post('/', productController.createProduct);
 
-router.post('/', async (req, res) => {
-  const product = new Product({
-    name: req.body.name,
-    price: req.body.price,
-    description: req.body.description
-  });
+// Retrieve all products
+router.get('/', productController.getAllProducts);
 
-  try {
-    const newProduct = await product.save();
-    res.status(201).json(newProduct);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
+// Retrieve a single product with productId
+router.get('/:productId', productController.getProductById);
+
+// Update a product with productId
+router.put('/:productId', productController.updateProduct);
+
+// Delete a product with productId
+router.delete('/:productId', productController.deleteProduct);
 
 module.exports = router;
-
-// router.get('/:id', (req, res) => {
-//     res.status(501).json({ message: 'Get product by id not implemented yet' });
-// });
-
-// router.post('/', (req, res) => {
-//     res.status(501).json({ message: 'Create product not implemented yet' });
-// });
-
-// router.put('/:id', (req, res) => {
-//     res.status(501).json({ message: 'Update product not implemented yet' });
-// });
-
-// router.delete('/:id', (req, res) => {
-//     res.status(501).json({ message: 'Delete product not implemented yet' });
-// });
-
-// module.exports = router;
