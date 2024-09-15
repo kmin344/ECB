@@ -1,16 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const authController = require('../controllers/auth.controller');
+const { verifyToken } = require('../middleware/auth');
 
-router.post('/register', (req, res) => {
-    res.status(501).json({ message: 'User registration not implemented yet' });
-});
+// Register a new user
+router.post('/register', authController.register);
 
-router.post('/login', (req, res) => {
-    res.status(501).json({ message: 'User login not implemented yet' });
-});
+// Login
+router.post('/login', authController.login);
 
-router.post('/logout', (req, res) => {
-    res.status(501).json({ message: 'User logout not implemented yet' });
-});
+// Get current user (protected route)
+router.get('/me', verifyToken, authController.getCurrentUser);
 
 module.exports = router;
