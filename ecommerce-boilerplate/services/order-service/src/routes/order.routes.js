@@ -1,24 +1,20 @@
 const express = require('express');
 const router = express.Router();
+const orderController = require('../controllers/order.controller');
 
-router.get('/', (req, res) => {
-    res.status(501).json({ message: 'Get all orders not implemented yet' });
-});
+// Create a new order
+router.post('/', orderController.createOrder);
 
-router.get('/:id', (req, res) => {
-    res.status(501).json({ message: 'Get order by id not implemented yet' });
-});
+// Retrieve all orders
+router.get('/', orderController.getAllOrders);
 
-router.post('/', (req, res) => {
-    res.status(501).json({ message: 'Create order not implemented yet' });
-});
+// Retrieve a single order with orderId
+router.get('/:orderId', orderController.getOrderById);
 
-router.put('/:id', (req, res) => {
-    res.status(501).json({ message: 'Update order not implemented yet' });
-});
+// Update an order with orderId
+router.put('/:orderId', orderController.updateOrder);
 
-router.delete('/:id', (req, res) => {
-    res.status(501).json({ message: 'Delete order not implemented yet' });
-});
+// Delete an order with orderId
+router.delete('/:orderId', orderController.deleteOrder);
 
 module.exports = router;
