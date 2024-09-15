@@ -40,7 +40,7 @@ This project is a microservices-based e-commerce application built using Node.js
 
 3. The services should now be running. You can check their status with:
    ```
-   docker-compose ps
+   docker compose ps
    ```
 
 ## API Endpoints
@@ -77,7 +77,7 @@ To develop a specific service:
 
 4. Rebuild the Docker containers:
    ```
-   docker-compose up --build -d
+   docker compose up --build -d
    ```
 
 ## Testing
@@ -98,12 +98,12 @@ If you encounter any issues:
 
 1. Check if all containers are running:
    ```
-   docker-compose ps
+   docker compose ps
    ```
 
 2. Check the logs of a specific service:
    ```
-   docker-compose logs [service-name]
+   docker compose logs [service-name]
    ```
 
 3. Ensure all required ports are free on your host machine.
