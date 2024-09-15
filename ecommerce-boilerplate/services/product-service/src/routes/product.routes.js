@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/product.controller');
+const { verifyToken } = require('../../../shared/middleware/auth');
+
+router.use(verifyToken);
 
 // Create a new product
 router.post('/', productController.createProduct);
