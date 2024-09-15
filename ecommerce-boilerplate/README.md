@@ -85,11 +85,20 @@ To develop a specific service:
 You can test the API endpoints using cURL or Postman. Example cURL commands:
 
 ```bash
+# Create a new product
+curl -X POST http://localhost:4000/api/products -H "Content-Type: application/json" -d '{"name":"Test Product","description":"This is a test product","price":9.99,"category":"Electronics","inStock":true}'
+
 # Get all products
 curl http://localhost:4000/api/products
 
-# Create a new product
-curl -X POST http://localhost:4000/api/products -H "Content-Type: application/json" -d '{"name":"Test Product","price":9.99}'
+# Get a single product (replace <productId> with an actual ID)
+curl http://localhost:4000/api/products/<productId>
+
+# Update a product (replace <productId> with an actual ID)
+curl -X PUT http://localhost:4000/api/products/<productId> -H "Content-Type: application/json" -d '{"name":"Updated Product","price":19.99}'
+
+# Delete a product (replace <productId> with an actual ID)
+curl -X DELETE http://localhost:4000/api/products/<productId>
 ```
 
 ## Troubleshooting
