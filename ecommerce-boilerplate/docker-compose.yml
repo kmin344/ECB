@@ -10,16 +10,22 @@ services:
 
   product-service:
     build: ./services/product-service
+    volumes:
+      - ./services/product-service:/usr/src/app
     depends_on:
       - mongo
 
   order-service:
     build: ./services/order-service
+    volumes:
+      - ./services/order-service:/usr/src/app
     depends_on:
       - mongo
 
   auth-service:
     build: ./services/auth-service
+    volumes:
+      - ./services/auth-service:/usr/src/app
     depends_on:
       - mongo
 
