@@ -1,18 +1,15 @@
 {
-  "name": "order-service",
+  "name": "ecommerce-shared-lib",
   "version": "1.0.0",
   "main": "index.js",
+  "dependencies": {
+    "jsonwebtoken": "^8.5.1"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "express": "^4.21.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.6.2",
-    "ecommerce-shared-lib": "file:../shared-lib"
-  },
   "description": ""
 }
