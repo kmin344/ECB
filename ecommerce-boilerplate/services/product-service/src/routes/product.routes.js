@@ -20,4 +20,6 @@ router.put('/:productId', productController.updateProduct);
 // Delete a product with productId
 router.delete('/:productId', productController.deleteProduct);
 
+router.post('/check-availability', productController.checkAvailability);
+
 module.exports = router;

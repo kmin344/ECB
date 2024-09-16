@@ -105,3 +105,19 @@ exports.deleteProduct = async (req, res) => {
     });
   }
 };
+
+exports.checkAvailability = async (req, res) => {
+  try {
+    const { products } = req.body;
+    const availability = await Promise.all(products.map(async (item) => {
+      const product = await Product.findById(item.productId);
+      return {
+        productId: item.productId,
+        available: product ? product.stock >= item.quantity : false
+      };
+    }));
+    res.json(availability);
+  } catch (error) {
+    res.status(500).json({ message: 'Error checking product availability', error: error.message });
+  }
+};

@@ -3,11 +3,22 @@ const Order = require('../models/order.model');
 // Create and Save a new Order
 exports.createOrder = async (req, res) => {
   try {
+    const { userId, products, totalAmount, shippingAddress } = req.body;
+
+    // Check product availability
+    const availabilityCheck = await axios.post('http://product-service:3000/api/products/check-availability', { products });
+    const unavailableProducts = availabilityCheck.data.filter(item => !item.available);
+
+    if (unavailableProducts.length > 0) {
+      return res.status(400).json({ message: 'Some products are not available', unavailableProducts });
+    }
+
     const order = new Order({
-      userId: req.body.userId,
-      products: req.body.products,
-      totalAmount: req.body.totalAmount,
-      shippingAddress: req.body.shippingAddress
+      userId,
+      products,
+      totalAmount,
+      shippingAddress,
+      status: 'pending'
     });
 
     const savedOrder = await order.save();

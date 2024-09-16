@@ -11,7 +11,8 @@
   "dependencies": {
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.6.2"
+    "mongoose": "^8.6.2",
+    "axios": "^0.21.1"
   },
   "description": ""
 }
