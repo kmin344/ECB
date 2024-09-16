@@ -24,6 +24,8 @@ const productSchema = new mongoose.Schema({
     default: true 
   },
   stock: { type: Number, required: true, default: 0 },
+  averageRating: { type: Number, default: 0 },
+  numberOfRatings: { type: Number, default: 0 },
   createdAt: { 
     type: Date, 
     default: Date.now 

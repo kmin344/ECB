@@ -32,3 +32,13 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`API Gateway running on port ${PORT}`));
+
+const reviewServiceProxy = createProxyMiddleware({
+  target: 'http://review-service:3000',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/reviews': '/api/reviews',
+  },
+});
+
+app.use('/api/reviews', reviewServiceProxy);
