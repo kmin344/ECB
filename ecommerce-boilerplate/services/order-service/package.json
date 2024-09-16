@@ -9,10 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.21.4",
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.6.2",
-    "axios": "^0.21.1"
+    "mongoose": "^8.6.2"
   },
   "description": ""
 }

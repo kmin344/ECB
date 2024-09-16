@@ -2,43 +2,33 @@ const axios = require('axios');
 
 const API_GATEWAY_URL = 'http://localhost:4000';
 
-async function authenticate() {
-  try {
-    const response = await axios.post(`${API_GATEWAY_URL}/api/auth/login`, {
-      email: 'test@example.com',
-      password: 'password123'
-    });
-    return response.data.token;
-  } catch (error) {
-    console.error('Authentication failed:', error.response ? error.response.data : error.message);
-    throw error;
-  }
-}
+const random = Math.floor(Math.random() * 1000);
 
 async function testAuthService() {
   console.log('Testing Auth Service...');
   
   try {
     // Test user registration
+    
     const registerResponse = await axios.post(`${API_GATEWAY_URL}/api/auth/register`, {
-      username: 'newuser',  // Added username field
-      email: 'newuser@example.com',
-      password: 'newpassword123'
+      username: 'newuser' + random,
+      email: 'newuser@example.com' + random,
+      password: 'newpassword123' + random
     });
     console.log('Register Response:', registerResponse.data);
 
     // Test user login
     const loginResponse = await axios.post(`${API_GATEWAY_URL}/api/auth/login`, {
-      email: 'newuser@example.com',
-      password: 'newpassword123'
+      email: 'newuser@example.com' + random,
+      password: 'newpassword123' + random
     });
     console.log('Login Response:', loginResponse.data);
 
     console.log('Auth Service tests passed successfully!');
-    return loginResponse.data.token;  // Return token for subsequent tests
+    return loginResponse.data.token;
   } catch (error) {
     console.error('Auth Service Test Error:', error.response ? error.response.data : error.message);
-    throw error;  // Rethrow the error to stop subsequent tests
+    throw error;
   }
 }
 
@@ -81,7 +71,7 @@ async function testProductService(token) {
     console.log('Check Availability Response:', checkAvailabilityResponse.data);
 
     console.log('Product Service tests passed successfully!');
-    return productId;  // Return productId for order service test
+    return productId;
   } catch (error) {
     console.error('Product Service Test Error:', error.response ? error.response.data : error.message);
     throw error;
@@ -95,9 +85,18 @@ async function testOrderService(token, productId) {
     const headers = { Authorization: `Bearer ${token}` };
 
     // Test creating an order
-    const createOrderResponse = await axios.post(`${API_GATEWAY_URL}/api/orders`, {
-      products: [{ productId, quantity: 2 }]
-    }, { headers });
+    const createOrderPayload = {
+      userId: "newuser" + random,  // This should be a valid user ID from your Auth Service
+      products: [{ productId, quantity: 2 }],
+      totalAmount: 19.98,  // This should be calculated based on the product price and quantity
+      shippingAddress: "123 Test Street, Test City, Test Country 12345"
+    };
+
+    const createOrderResponse = await axios.post(
+      `${API_GATEWAY_URL}/api/orders`,
+      createOrderPayload,
+      { headers }
+    );
     console.log('Create Order Response:', createOrderResponse.data);
 
     const orderId = createOrderResponse.data._id;
@@ -113,6 +112,8 @@ async function testOrderService(token, productId) {
     console.log('Order Service tests passed successfully!');
   } catch (error) {
     console.error('Order Service Test Error:', error.response ? error.response.data : error.message);
+    console.error('Full error object:', error);
+    throw error;
   }
 }
 

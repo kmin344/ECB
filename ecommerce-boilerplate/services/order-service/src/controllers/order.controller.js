@@ -1,32 +1,27 @@
+const axios = require('axios');
 const Order = require('../models/order.model');
 
 // Create and Save a new Order
 exports.createOrder = async (req, res) => {
   try {
+    console.log('Received order data:', req.body);  // Add this line for debugging
     const { userId, products, totalAmount, shippingAddress } = req.body;
 
-    // Check product availability
-    const availabilityCheck = await axios.post('http://product-service:3000/api/products/check-availability', { products });
-    const unavailableProducts = availabilityCheck.data.filter(item => !item.available);
-
-    if (unavailableProducts.length > 0) {
-      return res.status(400).json({ message: 'Some products are not available', unavailableProducts });
-    }
-
-    const order = new Order({
+    const newOrder = new Order({
       userId,
       products,
       totalAmount,
-      shippingAddress,
-      status: 'pending'
+      shippingAddress
     });
 
-    const savedOrder = await order.save();
-    res.status(201).send(savedOrder);
+    console.log('New order object:', newOrder);  // Add this line for debugging
+
+    const savedOrder = await newOrder.save();
+    console.log('Saved order:', savedOrder);  // Add this line for debugging
+    res.status(201).json(savedOrder);
   } catch (error) {
-    res.status(500).send({
-      message: error.message || "Some error occurred while creating the Order."
-    });
+    console.error('Error creating order:', error);  // Add this line for debugging
+    res.status(500).json({ message: 'Error creating order', error: error.message });
   }
 };
 
