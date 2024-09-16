@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/product.controller');
-const { verifyToken } = require('ecommerce-shared-lib');
+const { verifyToken } = require('../middleware/auth');
 
 router.use(verifyToken);
 

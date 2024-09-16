@@ -12,7 +12,7 @@ services:
     build: ./services/product-service
     volumes:
       - ./services/product-service:/usr/src/app
-      - ./shared-lib:/usr/src/shared-lib
+      - /usr/src/app/node_modules
     depends_on:
       - mongo
 
@@ -20,7 +20,7 @@ services:
     build: ./services/order-service
     volumes:
       - ./services/order-service:/usr/src/app
-      - ./shared-lib:/usr/src/shared-lib
+      - /usr/src/app/node_modules
     depends_on:
       - mongo
 
@@ -28,7 +28,7 @@ services:
     build: ./services/auth-service
     volumes:
       - ./services/auth-service:/usr/src/app
-      - ./shared-lib:/usr/src/shared-lib
+      - /usr/src/app/node_modules
     depends_on:
       - mongo
 
