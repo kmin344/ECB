@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Grid, Paper, Typography, CircularProgress
-} from '@material-ui/core';
+} from '@mui/material';
+
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, PieChart, Pie, Cell

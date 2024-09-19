@@ -4,7 +4,8 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
   Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, 
   Typography, Grid
-} from '@material-ui/core';
+} from '@mui/material';
+
 import Layout from '../components/Layout';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/api';
 
