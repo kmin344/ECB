@@ -1,7 +1,7 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -13,10 +13,22 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 // Auth
-export const login = (credentials) => api.post('/auth/login', credentials);
+export const login = async (credentials) => {
+  const response = await api.post('/auth/login', credentials);
+  if (response.data.token) {
+    localStorage.setItem('token', response.data.token);
+  }
+  return response;
+};
+
+export const logout = () => {
+  localStorage.removeItem('token');
+};
 
 // Products
 export const getProducts = () => api.get('/products');

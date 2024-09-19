@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
-  Button, Dialog, DialogTitle, DialogContent, DialogActions, 
-  Typography, Select, MenuItem
+  Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, 
+  Typography, Grid, Select, MenuItem
 } from '@mui/material';
 import Layout from '../components/Layout';
 import { getOrders, updateOrderStatus } from '../services/api';
@@ -72,7 +72,7 @@ const Orders = () => {
             {orders.map((order) => (
               <TableRow key={order._id}>
                 <TableCell>{order._id}</TableCell>
-                <TableCell>{order.customer.name}</TableCell>
+                <TableCell>{order.user ? order.user.name : 'N/A'}</TableCell>
                 <TableCell>${order.total.toFixed(2)}</TableCell>
                 <TableCell>{order.status}</TableCell>
                 <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
@@ -92,12 +92,12 @@ const Orders = () => {
           {currentOrder && (
             <>
               <Typography variant="h6">Order ID: {currentOrder._id}</Typography>
-              <Typography>Customer: {currentOrder.customer.name}</Typography>
-              <Typography>Email: {currentOrder.customer.email}</Typography>
+              <Typography>Customer: {currentOrder.user ? currentOrder.user.name : 'N/A'}</Typography>
+              <Typography>Email: {currentOrder.user ? currentOrder.user.email : 'N/A'}</Typography>
               <Typography>Total: ${currentOrder.total.toFixed(2)}</Typography>
               <Typography>Status: {currentOrder.status}</Typography>
               <Typography>Date: {new Date(currentOrder.createdAt).toLocaleString()}</Typography>
-              <Typography variant="h6" style={{marginTop: '1rem'}}>Items:</Typography>
+              <Typography variant="h6" style={{marginTop: '1rem'}}>Products:</Typography>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -108,11 +108,11 @@ const Orders = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {currentOrder.items.map((item, index) => (
+                    {currentOrder.products.map((item, index) => (
                       <TableRow key={index}>
                         <TableCell>{item.product.name}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
-                        <TableCell>${item.price.toFixed(2)}</TableCell>
+                        <TableCell>${item.product.price.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

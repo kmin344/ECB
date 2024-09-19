@@ -1,6 +1,5 @@
-// api-gateway/src/app.js
-
 const express = require('express');
+const cors = require('cors');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
@@ -25,6 +24,15 @@ app.use('/api/orders', createProxy('http://order-service:3000'));
 // Auth Service
 app.use('/api/auth', createProxy('http://auth-service:3000'));
 
+// User Service
+app.use('/api/users', createProxy('http://user-service:3000'));
+
+// Order Service
+app.use('/api/orders', createProxy('http://order-service:3000'));
+
+// Review Service
+app.use('/api/reviews', createProxy('http://review-service:3000'));
+
 // Handle 404 errors
 app.use((req, res) => {
   res.status(404).send('Not Found');
@@ -32,13 +40,3 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`API Gateway running on port ${PORT}`));
-
-const reviewServiceProxy = createProxyMiddleware({
-  target: 'http://review-service:3000',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/reviews': '/api/reviews',
-  },
-});
-
-app.use('/api/reviews', reviewServiceProxy);

@@ -15,6 +15,8 @@ async function testAuthService() {
       email: 'newuser@example.com' + random,
       password: 'newpassword123' + random
     });
+    console.log('email:', 'newuser@example.com' + random);
+    console.log('password:', 'newpassword123' + random);
     console.log('Register Response:', registerResponse.data);
 
     // Test user login

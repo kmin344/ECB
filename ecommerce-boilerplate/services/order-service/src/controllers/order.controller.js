@@ -28,8 +28,10 @@ exports.createOrder = async (req, res) => {
 // Retrieve all Orders from the database
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find();
-    res.send(orders);
+    const orders = await Order.find()
+      .populate('user', 'name email') // Populate user data
+      .populate('products.product', 'name price'); // Populate product data
+    res.json(orders);
   } catch (error) {
     res.status(500).send({
       message: error.message || "Some error occurred while retrieving orders."
