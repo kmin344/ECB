@@ -1,14 +1,15 @@
+
 services:
   api-gateway:
     build: ./api-gateway
     ports:
-      - '4000:4000'
+      - 4000:4000
     depends_on:
       - product-service
       - order-service
       - auth-service
       - review-service
-
+      - user-service
   product-service:
     build: ./services/product-service
     volumes:
@@ -18,7 +19,6 @@ services:
       - JWT_SECRET=your_jwt_secret
     depends_on:
       - mongo
-
   order-service:
     build: ./services/order-service
     volumes:
@@ -28,7 +28,6 @@ services:
       - JWT_SECRET=your_jwt_secret
     depends_on:
       - mongo
-
   auth-service:
     build: ./services/auth-service
     volumes:
@@ -38,7 +37,6 @@ services:
       - JWT_SECRET=your_jwt_secret
     depends_on:
       - mongo
-
   review-service:
     build: ./services/review-service
     volumes:
@@ -48,30 +46,36 @@ services:
       - JWT_SECRET=your_jwt_secret
     depends_on:
       - mongo
-
   admin-dashboard:
     build: ./admin-dashboard
     ports:
-      - '3000:80'
+      - 3000:80
     environment:
       - REACT_APP_API_URL=http://api-gateway:4000/api
     depends_on:
       - api-gateway
-
   mongo:
     image: mongo:latest
     volumes:
       - mongo-data:/data/db
-
   nginx:
     image: nginx:latest
     ports:
-      - '80:80'
+      - 80:80
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - api-gateway
       - admin-dashboard
+  user-service:
+    build: ./services/user-service
+    volumes:
+      - ./services/user-service:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - JWT_SECRET=your_jwt_secret
+    depends_on:
+      - mongo
 
 volumes:
-  mongo-data:
+  mongo-data: null
