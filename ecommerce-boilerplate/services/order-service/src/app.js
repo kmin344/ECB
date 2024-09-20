@@ -1,6 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const { verifyToken } = require('./middleware/auth');
+// Import and register models
+require('./models/user.model');
+require('./models/product.model');
+require('./models/order.model');
+
 const app = express();
 
 app.use(express.json());

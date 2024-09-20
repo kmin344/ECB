@@ -1,4 +1,3 @@
-// src/pages/Orders.js
 import React, { useState, useEffect } from 'react';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
@@ -51,6 +50,10 @@ const Orders = () => {
     }
   };
 
+  const formatPrice = (price) => {
+    return typeof price === 'number' ? `$${price.toFixed(2)}` : 'N/A';
+  };
+
   return (
     <Layout>
       <Typography variant="h4" gutterBottom>
@@ -73,7 +76,7 @@ const Orders = () => {
               <TableRow key={order._id}>
                 <TableCell>{order._id}</TableCell>
                 <TableCell>{order.user ? order.user.name : 'N/A'}</TableCell>
-                <TableCell>${order.total.toFixed(2)}</TableCell>
+                <TableCell>{formatPrice(order.totalAmount)}</TableCell>
                 <TableCell>{order.status}</TableCell>
                 <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell>
@@ -94,7 +97,7 @@ const Orders = () => {
               <Typography variant="h6">Order ID: {currentOrder._id}</Typography>
               <Typography>Customer: {currentOrder.user ? currentOrder.user.name : 'N/A'}</Typography>
               <Typography>Email: {currentOrder.user ? currentOrder.user.email : 'N/A'}</Typography>
-              <Typography>Total: ${currentOrder.total.toFixed(2)}</Typography>
+              <Typography>Total: {formatPrice(currentOrder.totalAmount)}</Typography>
               <Typography>Status: {currentOrder.status}</Typography>
               <Typography>Date: {new Date(currentOrder.createdAt).toLocaleString()}</Typography>
               <Typography variant="h6" style={{marginTop: '1rem'}}>Products:</Typography>
@@ -110,9 +113,9 @@ const Orders = () => {
                   <TableBody>
                     {currentOrder.products.map((item, index) => (
                       <TableRow key={index}>
-                        <TableCell>{item.product.name}</TableCell>
+                        <TableCell>{item.product ? item.product.name : 'N/A'}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
-                        <TableCell>${item.product.price.toFixed(2)}</TableCell>
+                        <TableCell>{formatPrice(item.product ? item.product.price : null)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

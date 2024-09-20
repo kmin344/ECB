@@ -1,26 +1,25 @@
-const axios = require('axios');
 const Order = require('../models/order.model');
 
 // Create and Save a new Order
 exports.createOrder = async (req, res) => {
   try {
-    console.log('Received order data:', req.body);  // Add this line for debugging
-    const { userId, products, totalAmount, shippingAddress } = req.body;
+    console.log('Received order data:', req.body);
+    const { user, products, totalAmount, shippingAddress } = req.body;
 
     const newOrder = new Order({
-      userId,
+      user,
       products,
       totalAmount,
       shippingAddress
     });
 
-    console.log('New order object:', newOrder);  // Add this line for debugging
+    console.log('New order object:', newOrder);
 
     const savedOrder = await newOrder.save();
-    console.log('Saved order:', savedOrder);  // Add this line for debugging
+    console.log('Saved order:', savedOrder);
     res.status(201).json(savedOrder);
   } catch (error) {
-    console.error('Error creating order:', error);  // Add this line for debugging
+    console.error('Error creating order:', error);
     res.status(500).json({ message: 'Error creating order', error: error.message });
   }
 };
@@ -42,7 +41,9 @@ exports.getAllOrders = async (req, res) => {
 // Find a single Order with an orderId
 exports.getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.orderId);
+    const order = await Order.findById(req.params.orderId)
+      .populate('user', 'name email')
+      .populate('products.product', 'name price');
     if (!order) {
       return res.status(404).send({
         message: "Order not found with id " + req.params.orderId
@@ -65,13 +66,14 @@ exports.getOrderById = async (req, res) => {
 exports.updateOrder = async (req, res) => {
   try {
     const order = await Order.findByIdAndUpdate(req.params.orderId, {
-      userId: req.body.userId,
+      user: req.body.user,
       products: req.body.products,
       totalAmount: req.body.totalAmount,
       status: req.body.status,
-      shippingAddress: req.body.shippingAddress,
-      updatedAt: Date.now()
-    }, { new: true });
+      shippingAddress: req.body.shippingAddress
+    }, { new: true })
+      .populate('user', 'name email')
+      .populate('products.product', 'name price');
 
     if (!order) {
       return res.status(404).send({
