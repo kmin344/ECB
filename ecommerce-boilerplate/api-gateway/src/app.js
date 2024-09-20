@@ -4,34 +4,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 
-// Root route
-app.get('/', (req, res) => {
-  res.send('Welcome to the E-commerce API Gateway');
-});
-
-// Proxy middleware configuration
-const createProxy = (target) => createProxyMiddleware({
-  target,
-  changeOrigin: true,
-});
-
-// Product Service
-app.use('/api/products', createProxy('http://product-service:3000'));
-
-// Order Service
-app.use('/api/orders', createProxy('http://order-service:3000'));
-
-// Auth Service
-app.use('/api/auth', createProxy('http://auth-service:3000'));
-
-// User Service
-app.use('/api/users', createProxy('http://user-service:3000'));
-
-// Order Service
-app.use('/api/orders', createProxy('http://order-service:3000'));
-
-// Review Service
-app.use('/api/reviews', createProxy('http://review-service:3000'));
+app.use('/', require('./routes/auth.routes'));
 
 // Handle 404 errors
 app.use((req, res) => {
