@@ -77,7 +77,7 @@ program
     await updateDockerCompose(moduleNameLower, port);
 
     // Update API Gateway
-    const apiGatewayPath = path.join(__dirname, '..', 'api-gateway', 'src', 'app.js');
+    const apiGatewayPath = path.join(__dirname, '..', 'api-gateway', 'src', 'routes', 'route.js');
     let apiGatewayContent = await fs.readFile(apiGatewayPath, 'utf8');
     apiGatewayContent += createApiGatewayRoute(moduleNameLower);
     await fs.writeFile(apiGatewayPath, apiGatewayContent);
@@ -360,10 +360,19 @@ async function updateDockerCompose(moduleName, port) {
   }
 
   // Convert the updated object back to YAML
-  const updatedDockerComposeContent = yaml.dump(dockerCompose);
+  const updatedDockerComposeContent = yaml.dump(dockerCompose, {
+    indent: 2,
+    lineWidth: -1,
+    noRefs: true,
+    noCompatMode: true
+  });
+
+  const formattedYaml = updatedDockerComposeContent.replace(/^(\S.*):$/gm, (match, p1) => {
+    return `\n${match}`;
+  });
 
   // Write the updated content back to the file
-  await fs.writeFile(dockerComposePath, updatedDockerComposeContent);
+  await fs.writeFile(dockerComposePath, formattedYaml, 'utf8');
 }
 
 function createApiGatewayRoute(moduleName) {
