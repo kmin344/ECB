@@ -14,6 +14,11 @@ api.interceptors.request.use((config) => {
   }
   return config;
 }, (error) => {
+  if (error.response && error.response.status === 401) {
+    // Token is invalid or expired
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  }
   return Promise.reject(error);
 });
 
@@ -28,6 +33,7 @@ export const login = async (credentials) => {
 
 export const logout = () => {
   localStorage.removeItem('token');
+  window.location.href = '/login';
 };
 
 // Products
