@@ -1,4 +1,7 @@
 const express = require('express');
+const cors = require('cors');
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
 const router = express.Router();
 
 // Proxy middleware configuration
@@ -8,7 +11,7 @@ const createProxy = (target) => createProxyMiddleware({
 });
 
 // Root route
-app.get('/', (req, res) => {
+router.get('/', (req, res) => {
   res.send('Welcome to the E-commerce API Gateway');
 });
 
