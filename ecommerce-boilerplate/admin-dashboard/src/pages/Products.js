@@ -1,18 +1,23 @@
-// src/pages/Products.js
 import React, { useState, useEffect } from 'react';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
   Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, 
-  Typography, Grid
+  Typography, Grid, Switch, FormControlLabel
 } from '@mui/material';
-
 import Layout from '../components/Layout';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/api';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [open, setOpen] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState({ name: '', price: '', description: '' });
+  const [currentProduct, setCurrentProduct] = useState({
+    name: '',
+    description: '',
+    price: '',
+    category: '',
+    inStock: true,
+    stock: 0
+  });
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -29,7 +34,14 @@ const Products = () => {
     }
   };
 
-  const handleOpen = (product = { name: '', price: '', description: '' }) => {
+  const handleOpen = (product = {
+    name: '',
+    description: '',
+    price: '',
+    category: '',
+    inStock: true,
+    stock: 0
+  }) => {
     setCurrentProduct(product);
     setIsEditing(!!product._id);
     setOpen(true);
@@ -37,7 +49,14 @@ const Products = () => {
 
   const handleClose = () => {
     setOpen(false);
-    setCurrentProduct({ name: '', price: '', description: '' });
+    setCurrentProduct({
+      name: '',
+      description: '',
+      price: '',
+      category: '',
+      inStock: true,
+      stock: 0
+    });
     setIsEditing(false);
   };
 
@@ -46,12 +65,22 @@ const Products = () => {
     setCurrentProduct({ ...currentProduct, [name]: value });
   };
 
+  const handleSwitchChange = (e) => {
+    setCurrentProduct({ ...currentProduct, [e.target.name]: e.target.checked });
+  };
+
   const handleSubmit = async () => {
     try {
+      const productData = {
+        ...currentProduct,
+        price: parseFloat(currentProduct.price),
+        stock: parseInt(currentProduct.stock, 10)
+      };
+
       if (isEditing) {
-        await updateProduct(currentProduct._id, currentProduct);
+        await updateProduct(currentProduct._id, productData);
       } else {
-        await createProduct(currentProduct);
+        await createProduct(productData);
       }
       fetchProducts();
       handleClose();
@@ -92,8 +121,11 @@ const Products = () => {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>Price</TableCell>
               <TableCell>Description</TableCell>
+              <TableCell>Price</TableCell>
+              <TableCell>Category</TableCell>
+              <TableCell>In Stock</TableCell>
+              <TableCell>Stock</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -101,8 +133,11 @@ const Products = () => {
             {products.map((product) => (
               <TableRow key={product._id}>
                 <TableCell>{product.name}</TableCell>
-                <TableCell>${product.price}</TableCell>
                 <TableCell>{product.description}</TableCell>
+                <TableCell>${product.price.toFixed(2)}</TableCell>
+                <TableCell>{product.category}</TableCell>
+                <TableCell>{product.inStock ? 'Yes' : 'No'}</TableCell>
+                <TableCell>{product.stock}</TableCell>
                 <TableCell>
                   <Button color="primary" onClick={() => handleOpen(product)}>
                     Edit
@@ -131,6 +166,17 @@ const Products = () => {
           />
           <TextField
             margin="dense"
+            name="description"
+            label="Description"
+            type="text"
+            fullWidth
+            multiline
+            rows={4}
+            value={currentProduct.description}
+            onChange={handleInputChange}
+          />
+          <TextField
+            margin="dense"
             name="price"
             label="Price"
             type="number"
@@ -140,13 +186,31 @@ const Products = () => {
           />
           <TextField
             margin="dense"
-            name="description"
-            label="Description"
+            name="category"
+            label="Category"
             type="text"
             fullWidth
-            multiline
-            rows={4}
-            value={currentProduct.description}
+            value={currentProduct.category}
+            onChange={handleInputChange}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={currentProduct.inStock}
+                onChange={handleSwitchChange}
+                name="inStock"
+                color="primary"
+              />
+            }
+            label="In Stock"
+          />
+          <TextField
+            margin="dense"
+            name="stock"
+            label="Stock"
+            type="number"
+            fullWidth
+            value={currentProduct.stock}
             onChange={handleInputChange}
           />
         </DialogContent>
