@@ -285,6 +285,7 @@ const errorMiddleware = (err, req, res, next) => {
 };
 
 module.exports = errorMiddleware;`;
+}
 
 function createLogger() {
   return `const winston = require('winston');
@@ -408,5 +409,5 @@ const ${moduleName}ServiceProxy = createProxyMiddleware({
   },
 });
 
-app.use('/api/${moduleName}s', ${moduleName}ServiceProxy);`;
+router.use('/api/${moduleName}s', ${moduleName}ServiceProxy);`;
 }
