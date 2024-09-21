@@ -43,4 +43,4 @@ const cartServiceProxy = createProxyMiddleware({
   },
 });
 
-app.use('/api/carts', cartServiceProxy);
+router.use('/api/carts', cartServiceProxy);
