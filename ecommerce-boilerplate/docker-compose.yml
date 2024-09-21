@@ -56,10 +56,20 @@ services:
       - REACT_APP_API_URL=http://api-gateway:4000/api
     depends_on:
       - api-gateway
+
+  ecommerce-frontend:
+    build: ./ecommerce-frontend
+    ports:
+      - 3001:80
+    environment:
+      - REACT_APP_API_URL=http://api-gateway:4000/api
+    depends_on:
+      - api-gateway
+
   mongo:
     image: mongo:latest
     volumes:
-      - mongo-data:/data/db
+      - ./mongo-data:/data/db
   nginx:
     image: nginx:latest
     ports:

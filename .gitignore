@@ -1,1 +1,6 @@
 node_modules
+dist
+coverage
+
+mongo-data
+redis-data
