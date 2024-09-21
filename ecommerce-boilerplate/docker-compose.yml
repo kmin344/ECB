@@ -91,7 +91,7 @@ services:
   redis:
     image: redis:latest
     volumes:
-      - redis_data:/data
+      - ./redis_data:/data
 
 volumes:
   mongo-data: null
