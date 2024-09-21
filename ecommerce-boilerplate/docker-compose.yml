@@ -10,6 +10,7 @@ services:
       - auth-service
       - review-service
       - user-service
+      - cart-service
   product-service:
     build: ./services/product-service
     volumes:
@@ -76,6 +77,21 @@ services:
       - JWT_SECRET=your_jwt_secret
     depends_on:
       - mongo
+  cart-service:
+    build: ./services/cart-service
+    volumes:
+      - ./services/cart-service:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - JWT_SECRET=your_jwt_secret
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - mongo
+      - redis
+  redis:
+    image: redis:latest
+    volumes:
+      - redis_data:/data
 
 volumes:
   mongo-data: null

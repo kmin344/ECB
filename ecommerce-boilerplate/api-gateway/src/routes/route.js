@@ -34,3 +34,13 @@ router.use('/api/orders', createProxy('http://order-service:3000'));
 router.use('/api/reviews', createProxy('http://review-service:3000'));
 
 module.exports = router;
+
+const cartServiceProxy = createProxyMiddleware({
+  target: 'http://cart-service:3000',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/carts': '/api/carts',
+  },
+});
+
+app.use('/api/carts', cartServiceProxy);
