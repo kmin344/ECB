@@ -11,6 +11,7 @@ services:
       - review-service
       - user-service
       - cart-service
+      - payment-service
   product-service:
     build: ./services/product-service
     volumes:
@@ -92,6 +93,15 @@ services:
     image: redis:latest
     volumes:
       - ./redis_data:/data
+  payment-service:
+    build: ./services/payment-service
+    volumes:
+      - ./services/payment-service:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - JWT_SECRET=your_jwt_secret
+    depends_on:
+      - mongo
 
 volumes:
   mongo-data: null

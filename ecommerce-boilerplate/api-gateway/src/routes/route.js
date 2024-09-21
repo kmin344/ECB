@@ -44,3 +44,13 @@ const cartServiceProxy = createProxyMiddleware({
 });
 
 router.use('/api/carts', cartServiceProxy);
+
+const paymentServiceProxy = createProxyMiddleware({
+  target: 'http://payment-service:3000',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/payments': '/api/payments',
+  },
+});
+
+router.use('/api/payments', paymentServiceProxy);
