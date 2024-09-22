@@ -1,47 +1,43 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { ThemeProvider } from 'styled-components';
-import { Provider } from 'react-redux';
 import styled from 'styled-components';
 import Header from './components/Header';
 import Home from './pages/Home';
-import ProductList from './components/ProductList';
+// import Shop from './pages/Shop';
+// import MembershipBenefits from './pages/MembershipBenefits';
 import Cart from './components/Cart';
 import Profile from './components/Profile';
-import { store } from './store';
-import GlobalStyle from './styles/GlobalStyle';
-import theme from './styles/theme';
+import { Provider } from 'react-redux';
+import {store} from './store';
 
 const AppWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  font-family: 'Arial', sans-serif;
+  color: #333;
 `;
 
 const MainContent = styled.main`
-  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 20px;
 `;
 
 const App = () => {
   return (
     <Provider store={store}>
-      <ThemeProvider theme={theme}>
-        <GlobalStyle />
-        <Router>
-          <AppWrapper>
-            <Header />
-            <MainContent>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/products" element={<ProductList />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/profile" element={<Profile />} />
-              </Routes>
-            </MainContent>
-          </AppWrapper>
-        </Router>
-      </ThemeProvider>
+    <Router>
+      <AppWrapper>
+        <Header />
+        <MainContent>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            {/* <Route path="/shop" element={<Shop />} /> */}
+            {/* <Route path="/membership-benefits" element={<MembershipBenefits />} /> */}
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+        </MainContent>
+      </AppWrapper>
+    </Router>
     </Provider>
   );
 };
