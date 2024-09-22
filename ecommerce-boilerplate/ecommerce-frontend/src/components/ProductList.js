@@ -1,6 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchProducts } from '../store/productsSlice';
 
-const ProductList = ({ products }) => (
+const ProductList = ({ products }) => {
+  const dispatch = useDispatch();
+  const { items: products, status, error } = useSelector(state => state.products);
+
+  useEffect(() => {
+    if (status === 'idle') {
+      dispatch(fetchProducts());
+    }
+  }, [status, dispatch]);
+
+  return (
   <div className="product-list">
     {products.map(product => (
       <div key={product.id} className="product-item">
@@ -10,6 +22,6 @@ const ProductList = ({ products }) => (
       </div>
     ))}
   </div>
-);
+)};
 
 export default ProductList;
