@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchProducts } from '../store/productsSlice';
 
-const ProductList = ({ products }) => {
+const ProductList = () => {
   const dispatch = useDispatch();
   const { items: products, status, error } = useSelector(state => state.products);
 
