@@ -5,7 +5,7 @@ import Header from './components/Header';
 import Home from './pages/Home';
 // import Shop from './pages/Shop';
 // import MembershipBenefits from './pages/MembershipBenefits';
-import Cart from './components/Cart';
+import Cart from './pages/Cart';
 import Profile from './components/Profile';
 import { Provider } from 'react-redux';
 import {store} from './store';
