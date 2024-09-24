@@ -17,7 +17,7 @@ const Header = () => {
       <div className="flex space-x-4">
         <button>Search</button>
         <button>Account</button>
-        <button>Cart</button>
+        <Link to="/cart"><button>Cart</button></Link>
       </div>
     </header>
   );
