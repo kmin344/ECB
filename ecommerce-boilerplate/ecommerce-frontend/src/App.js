@@ -5,8 +5,10 @@ import Header from './components/Header';
 import Home from './pages/Home';
 // import Shop from './pages/Shop';
 // import MembershipBenefits from './pages/MembershipBenefits';
+import ProductPage from './pages/Product';
 import Cart from './pages/Cart';
 import Profile from './components/Profile';
+import ProductList from './components/ProductList';
 import { Provider } from 'react-redux';
 import {store} from './store';
 
@@ -28,6 +30,8 @@ const App = () => {
         <MainContent>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/products" element={<ProductList />} />
+            <Route path="/product/:id" element={<ProductPage />} /> {/* New route */}
             {/* <Route path="/shop" element={<Shop />} /> */}
             {/* <Route path="/membership-benefits" element={<MembershipBenefits />} /> */}
             <Route path="/cart" element={<Cart />} />
