@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HeartIcon, StarIcon, EyeIcon } from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolidIcon, StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
-import QuickViewModal from './QuickViewModal'; // Assume we have this component
+import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
+import QuickViewModal from './QuickViewModal';
 
 const BestSellersSection = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -10,10 +10,21 @@ const BestSellersSection = () => {
 
   // Mock product data for Best Sellers
   const bestSellers = [
+    { 
+      id: 1, 
+      name: "Best Seller 1", 
+      price: 39000, 
+      originalPrice: 44000,
+      image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", 
+      rating: 4.5, 
+      reviews: 120,
+      description: "This is a description for Best Seller 1."
+    },
     { id: 1, name: "Best Seller 1", price: 39000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.5, reviews: 120 },
     { id: 2, name: "Best Seller 2", price: 49000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.2, reviews: 85 },
     { id: 3, name: "Best Seller 3", price: 44000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.8, reviews: 200 },
     { id: 4, name: "Best Seller 4", price: 52000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.0, reviews: 150 },
+
   ];
 
   const toggleWishlist = (productId) => {
