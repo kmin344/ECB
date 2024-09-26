@@ -7,23 +7,25 @@ const ProductPage = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
+    // In a real application, you would fetch the product data from an API
+    // For this example, we'll use a mock product
     const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/products/${id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch product');
-        }
-        const data = await response.json();
-        setProduct(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      // Simulating API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setProduct({
+        id: id,
+        name: `Product ${id}`,
+        price: 39000,
+        originalPrice: 44000,
+        image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg",
+        description: "This is a detailed description of the product. It provides information about the product's features, benefits, and any other relevant details that a customer might want to know.",
+        rating: 4.5,
+        reviews: 120,
+      });
+      setLoading(false);
     };
 
     fetchProduct();
@@ -31,10 +33,6 @@ const ProductPage = () => {
 
   if (loading) {
     return <div className="text-center mt-8">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center mt-8 text-red-500">Error: {error}</div>;
   }
 
   if (!product) {
