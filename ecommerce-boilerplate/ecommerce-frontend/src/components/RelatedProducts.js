@@ -1,43 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { StarIcon } from '@heroicons/react/24/solid';
 
 const RelatedProducts = ({ currentProductId }) => {
-  const [relatedProducts, setRelatedProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchRelatedProducts = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/products/${currentProductId}/related`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch related products');
-        }
-        const data = await response.json();
-        setRelatedProducts(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRelatedProducts();
-  }, [currentProductId]);
-
-  if (loading) {
-    return <div className="mt-12">Loading related products...</div>;
-  }
-
-  if (error) {
-    return <div className="mt-12 text-red-500">Error loading related products: {error}</div>;
-  }
-
-  if (relatedProducts.length === 0) {
-    return null;
-  }
+  // In a real application, you would fetch related products based on the current product
+  // For this example, we'll use mock data
+  const relatedProducts = [
+    { id: 2, name: "Related Product 1", price: 35000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.2, reviews: 89 },
+    { id: 3, name: "Related Product 2", price: 42000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.7, reviews: 156 },
+    { id: 4, name: "Related Product 3", price: 38000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.4, reviews: 102 },
+    { id: 5, name: "Related Product 4", price: 45000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.1, reviews: 73 },
+  ].filter(product => product.id !== parseInt(currentProductId));
 
   return (
     <div className="mt-12">
