@@ -114,7 +114,7 @@ const ShopPage = () => {
               <Link key={product.id} to={`/product/${product.id}`} className="group">
                 <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-gray-200">
                   <img 
-                    src={product.image} 
+                    src={product.thumbnail} 
                     alt={product.name} 
                     className="h-full w-full object-cover object-center group-hover:opacity-75 transition-opacity duration-300"
                   />

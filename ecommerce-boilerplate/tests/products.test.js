@@ -51,10 +51,10 @@ async function testProductService(token) {
         reviews: 120,
         description: "This is a description for Best Seller 1."
       },
-      { id: 1, name: "Best Seller 1", price: 39000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.5, reviews: 120 },
-      { id: 2, name: "Best Seller 2", price: 49000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.2, reviews: 85 },
-      { id: 3, name: "Best Seller 3", price: 44000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.8, reviews: 200 },
-      { id: 4, name: "Best Seller 4", price: 52000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.0, reviews: 150 },
+      { id: 1, name: "Best Seller 1", price: 39000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.5, reviews: 120, description: "This is a description for Best Seller 1." },
+      { id: 2, name: "Best Seller 2", price: 49000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.2, reviews: 85, description: "This is a description for Best Seller 1." },
+      { id: 3, name: "Best Seller 3", price: 44000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.8, reviews: 200, description: "This is a description for Best Seller 1." },
+      { id: 4, name: "Best Seller 4", price: 52000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.0, reviews: 150, description: "This is a description for Best Seller 1." },
   
     ];
   
@@ -62,6 +62,8 @@ async function testProductService(token) {
     // Test creating a product
     bestSellers.map(async (product) => {
       const createProductResponse = await axios.post(`${API_GATEWAY_URL}/api/products`, {
+        thumbnail: product.image,
+        images: [product.image],
         name: product.name,
         description: product.description || '',
         price: product.price,
@@ -141,6 +143,7 @@ async function testOrderService(token, productId) {
 
 async function runTests() {
   try {
+    const token = await testAuthService();
     const productId = await testProductService(token);
     await testOrderService(token, productId);
   } catch (error) {
