@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { StarIcon, FilterIcon } from '@heroicons/react/solid';
-import { fetchProducts } from '../redux/productsSlice'; // Assume this action exists
+import { StarIcon, FunnelIcon, MagnifyingGlassIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { fetchProducts } from '../store/productsSlice';
+import QuickViewModal from './QuickViewModal';
 
 const ShopPage = () => {
   const dispatch = useDispatch();
@@ -52,7 +53,7 @@ const ShopPage = () => {
             className="md:hidden w-full bg-gray-200 py-2 px-4 rounded mb-4 flex items-center justify-between"
           >
             <span>Filters</span>
-            <FilterIcon className="h-5 w-5" />
+            <FunnelIcon className="h-5 w-5" />
           </button>
           
           <div className={`${showFilters ? 'block' : 'hidden'} md:block`}>
