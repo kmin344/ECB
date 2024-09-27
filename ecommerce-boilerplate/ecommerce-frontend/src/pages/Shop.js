@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { StarIcon, FunnelIcon, MagnifyingGlassIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { fetchProducts } from '../store/productsSlice';
-import QuickViewModal from './QuickViewModal';
 
 const ShopPage = () => {
   const dispatch = useDispatch();
