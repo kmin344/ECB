@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import styled from 'styled-components';
 import Header from './components/Header';
 import Home from './pages/Home';
-// import Shop from './pages/Shop';
+import ShopPage from './pages/Shop';
 // import MembershipBenefits from './pages/MembershipBenefits';
 import ProductPage from './pages/Product';
 import Cart from './pages/Cart';
@@ -31,8 +31,8 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/products" element={<ProductList />} />
-            <Route path="/product/:id" element={<ProductPage />} /> {/* New route */}
-            {/* <Route path="/shop" element={<Shop />} /> */}
+            <Route path="/shop" element={<ShopPage />} />
+            <Route path="/product/:id" element={<ProductPage />} />
             {/* <Route path="/membership-benefits" element={<MembershipBenefits />} /> */}
             <Route path="/cart" element={<Cart />} />
             <Route path="/profile" element={<Profile />} />
