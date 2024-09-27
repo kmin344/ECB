@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { StarIcon, FilterIcon } from '@heroicons/react/solid';
+import { fetchProducts } from '../redux/productsSlice'; // Assume this action exists
 
 const ShopPage = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const { items: products, status, error } = useSelector(state => state.products);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [priceRange, setPriceRange] = useState([0, 1000000]); // Assuming max price is 1,000,000 won
@@ -13,27 +14,18 @@ const ShopPage = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/products');
-        if (!response.ok) {
-          throw new Error('Failed to fetch products');
-        }
-        const data = await response.json();
-        setProducts(data);
-        // Extract unique categories from products
-        const uniqueCategories = [...new Set(data.map(product => product.category))];
-        setCategories(uniqueCategories);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (status === 'idle') {
+      dispatch(fetchProducts());
+    }
+  }, [status, dispatch]);
 
-    fetchProducts();
-  }, []);
+  useEffect(() => {
+    if (products.length > 0) {
+      // Extract unique categories from products
+      const uniqueCategories = [...new Set(products.map(product => product.category))];
+      setCategories(uniqueCategories);
+    }
+  }, [products]);
 
   const filteredProducts = products
     .filter(product => selectedCategory ? product.category === selectedCategory : true)
@@ -46,8 +38,8 @@ const ShopPage = () => {
     return 0;
   });
 
-  if (loading) return <div className="text-center mt-8">Loading...</div>;
-  if (error) return <div className="text-center mt-8 text-red-500">Error: {error}</div>;
+  if (status === 'loading') return <div className="text-center mt-8">Loading...</div>;
+  if (status === 'failed') return <div className="text-center mt-8 text-red-500">Error: {error}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
