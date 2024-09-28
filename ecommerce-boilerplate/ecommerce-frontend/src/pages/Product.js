@@ -1,40 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProductById } from '../store/productsSlice';
 import { StarIcon } from '@heroicons/react/24/solid';
 import RelatedProducts from '../components/RelatedProducts';
 import ReviewsAndRatings from '../components/ReviewsAndRatings';
 
 const ProductPage = () => {
   const { id } = useParams();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const { item: product, status, error } = useSelector(state => state.products);
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/products/${id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch product');
-        }
-        const data = await response.json();
-        setProduct(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    dispatch(fetchProductById(id));
+  }, [dispatch, id]);
 
-    fetchProduct();
-  }, [id]);
-
-  if (loading) {
+  if (status === 'loading') {
     return <div className="text-center mt-8">Loading...</div>;
   }
 
-  if (error) {
+  if (status === 'failed') {
     return <div className="text-center mt-8 text-red-500">Error: {error}</div>;
   }
 
