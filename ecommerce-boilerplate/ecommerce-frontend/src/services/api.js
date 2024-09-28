@@ -36,6 +36,7 @@ export const logout = () => {
 };
 
 export const getProducts = () => api.get('/products');
+export const getProduct = (id) => api.get(`/products/${id}`);
 export const fetchCart = () => api.get('/cart');
 export const addToCart = (productId) => api.post('/cart', { productId });
 export const removeFromCart = (productId) => api.delete(`/cart/${productId}`);
