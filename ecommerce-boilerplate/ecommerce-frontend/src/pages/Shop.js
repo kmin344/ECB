@@ -111,7 +111,7 @@ const ShopPage = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedProducts.map(product => (
-              <Link key={product.id} to={`/product/${product.id}`} className="group">
+              <Link key={product._id} to={`/product/${product._id}`} className="group">
                 <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-gray-200">
                   <img 
                     src={product.thumbnail} 
