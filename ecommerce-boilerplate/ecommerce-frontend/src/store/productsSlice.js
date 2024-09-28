@@ -21,6 +21,7 @@ const productsSlice = createSlice({
   name: 'products',
   initialState: {
     items: [],
+    currentProduct: null,
     status: 'idle',
     error: null,
   },
@@ -37,6 +38,19 @@ const productsSlice = createSlice({
       .addCase(fetchProducts.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message;
+      })
+      .addCase(fetchProductById.pending, (state) => {
+        state.status = 'loading';
+        state.currentProduct = null;
+      })
+      .addCase(fetchProductById.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.currentProduct = action.payload;
+      })
+      .addCase(fetchProductById.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message;
+        state.currentProduct = null;
       });
   },
 });
