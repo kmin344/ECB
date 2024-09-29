@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { StarIcon } from '@heroicons/react/24/solid';
-import { fetchReviews, submitReview } from '../redux/reviewsSlice';
+import { fetchReviews, submitReview } from '../store/reviewsSlice';
 
 const ReviewsAndRatings = ({ productId }) => {
   const dispatch = useDispatch();

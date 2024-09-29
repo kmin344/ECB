@@ -6,20 +6,34 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Request interceptor
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    console.log('Request error:', error);
+    return Promise.reject(error);
   }
-  return config;
-}, (error) => {
-  if (error.response && error.response.status === 401) {
-    // Token is invalid or expired
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+);
+
+// Response interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.log('Response error:', error);
+    if (error.response && error.response.status === 401) {
+      console.log('Token is invalid or expired');
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
   }
-  return Promise.reject(error);
-});
+);
 
 // Auth
 export const login = async (credentials) => {
