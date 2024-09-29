@@ -1,82 +1,51 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { StarIcon } from '@heroicons/react/24/solid';
+import { fetchReviews, submitReview } from '../redux/reviewsSlice';
 
 const ReviewsAndRatings = ({ productId }) => {
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const { reviews, status, error } = useSelector(state => state.reviews);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
 
   useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/products/${productId}/reviews`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch reviews');
-        }
-        const data = await response.json();
-        setReviews(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    dispatch(fetchReviews(productId));
+  }, [dispatch, productId]);
 
-    fetchReviews();
-  }, [productId]);
-
-  const handleSubmitReview = async (e) => {
+  const handleSubmitReview = (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch(`/api/products/${productId}/reviews`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newReview),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to submit review');
-      }
-      const data = await response.json();
-      setReviews([...reviews, data]);
-      setNewReview({ rating: 5, comment: '' });
-    } catch (err) {
-      setError(err.message);
-    }
+    dispatch(submitReview({ productId, ...newReview }));
+    setNewReview({ rating: 5, comment: '' });
   };
 
-  if (loading) {
-    return <div className="mt-8">Loading reviews...</div>;
-  }
+  const renderStars = (rating) => {
+    return [...Array(5)].map((_, i) => (
+      <StarIcon
+        key={i}
+        className={`h-5 w-5 ${
+          i < Math.floor(rating) ? 'text-yellow-400' : 'text-gray-300'
+        }`}
+      />
+    ));
+  };
 
-  if (error) {
-    return <div className="mt-8 text-red-500">Error: {error}</div>;
-  }
+  if (status === 'loading') return <div>Loading reviews...</div>;
+  if (status === 'failed') return <div>Error: {error}</div>;
 
   return (
     <div className="mt-12">
       <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
-      <div className="mb-8">
-        {reviews.map((review, index) => (
-          <div key={index} className="mb-4 pb-4 border-b">
-            <div className="flex items-center mb-2">
-              {[...Array(5)].map((_, i) => (
-                <StarIcon
-                  key={i}
-                  className={`h-5 w-5 ${
-                    i < review.rating ? 'text-yellow-400' : 'text-gray-300'
-                  }`}
-                />
-              ))}
-              <span className="ml-2 text-gray-600">{review.date}</span>
-            </div>
-            <p className="text-gray-700">{review.comment}</p>
+      
+      {reviews.map((review, index) => (
+        <div key={index} className="mb-4 pb-4 border-b">
+          <div className="flex items-center mb-2">
+            {renderStars(review.rating)}
+            <span className="ml-2 text-gray-600">{review.date}</span>
           </div>
-        ))}
-      </div>
+          <p className="text-gray-700">{review.comment}</p>
+        </div>
+      ))}
+
       <form onSubmit={handleSubmitReview} className="mt-8">
         <h3 className="text-xl font-bold mb-4">Write a Review</h3>
         <div className="mb-4">

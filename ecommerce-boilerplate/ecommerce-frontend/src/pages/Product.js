@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProductById } from '../store/productsSlice';
+import { fetchProductById } from '../redux/productsSlice';
 import { StarIcon } from '@heroicons/react/24/solid';
-import RelatedProducts from '../components/RelatedProducts';
+import RelatedProducts from './RelatedProducts';
+import ReviewsAndRatings from './ReviewsAndRatings';
 
 const Product = () => {
   const { id } = useParams();
@@ -73,6 +74,8 @@ const Product = () => {
           </button>
         </div>
       </div>
+      
+      <ReviewsAndRatings productId={id} />
       
       <RelatedProducts currentProductId={id} category={category} />
     </div>

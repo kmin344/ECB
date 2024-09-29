@@ -46,6 +46,15 @@ export const getRelatedProducts = (productId, category) => {
   });
 };
 
+// Reviews
+export const getReviews = (productId) => {
+  return axios.get(`${API_URL}/products/${productId}/reviews`);
+};
+
+export const postReview = (productId, reviewData) => {
+  return axios.post(`${API_URL}/products/${productId}/reviews`, reviewData);
+};
+
 // Cart
 export const fetchCart = () => api.get('/cart');
 export const addToCart = (productId) => api.post('/cart', { productId });
