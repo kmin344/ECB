@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProductById } from '../store/productsSlice';
 import { StarIcon } from '@heroicons/react/24/solid';
+import RelatedProducts from '../components/RelatedProducts';
 
 const Product = () => {
   const { id } = useParams();
@@ -12,9 +13,6 @@ const Product = () => {
   useEffect(() => {
     dispatch(fetchProductById(id));
   }, [dispatch, id]);
-
-  useEffect(() => {
-  }, [currentProduct, status, error]);
 
   if (status === 'loading') {
     return <div className="text-center mt-8">Loading...</div>;
@@ -36,14 +34,15 @@ const Product = () => {
     price,
     originalPrice,
     rating,
-    reviews
+    reviews,
+    category
   } = currentProduct;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row -mx-4">
         <div className="md:flex-1 px-4">
-          <img src={thumbnail || images[0]} alt={name} className="rounded-lg shadow-md mb-4" />
+          <img src={thumbnail || (images && images[0])} alt={name} className="rounded-lg shadow-md mb-4" />
         </div>
         <div className="md:flex-1 px-4">
           <h2 className="text-3xl font-bold mb-2">{name}</h2>
@@ -61,7 +60,7 @@ const Product = () => {
             <span className="ml-2 text-gray-600">({reviews} reviews)</span>
           </div>
           <div className="mb-4">
-            <span className="text-3xl font-bold">{price.toLocaleString()}원</span>
+            <span className="text-3xl font-bold">{price?.toLocaleString()}원</span>
             {originalPrice && (
               <span className="ml-2 text-gray-500 line-through">
                 {originalPrice.toLocaleString()}원
@@ -74,6 +73,8 @@ const Product = () => {
           </button>
         </div>
       </div>
+      
+      <RelatedProducts currentProductId={id} category={category} />
     </div>
   );
 };

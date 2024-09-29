@@ -35,11 +35,23 @@ export const logout = () => {
   window.location.href = '/login';
 };
 
+// Products
 export const getProducts = () => api.get('/products');
 export const getProduct = (id) => api.get(`/products/${id}`);
+
+// Related products
+export const getRelatedProducts = (productId, category) => {
+  return axios.get(`${API_URL}/products/related`, {
+    params: { productId, category }
+  });
+};
+
+// Cart
 export const fetchCart = () => api.get('/cart');
 export const addToCart = (productId) => api.post('/cart', { productId });
 export const removeFromCart = (productId) => api.delete(`/cart/${productId}`);
+
+// Profile
 export const fetchProfile = () => api.get('/users/profile');
 export const updateProfile = (data) => api.put('/users/profile', data);
 // export const login = (credentials) => api.post('/auth/login', credentials);
