@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProductById } from '../redux/productsSlice';
+import { fetchProductById } from '../store/productsSlice';
 import { StarIcon } from '@heroicons/react/24/solid';
-import RelatedProducts from './RelatedProducts';
-import ReviewsAndRatings from './ReviewsAndRatings';
+import RelatedProducts from '../components/RelatedProducts';
+import ReviewsAndRatings from '../components/ReviewsAndRatings';
 
 const Product = () => {
   const { id } = useParams();
