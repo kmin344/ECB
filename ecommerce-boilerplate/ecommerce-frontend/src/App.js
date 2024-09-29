@@ -11,6 +11,7 @@ import Profile from './components/Profile';
 import ProductList from './components/ProductList';
 import { Provider } from 'react-redux';
 import {store} from './store';
+import Login from './pages/Login';
 
 const AppWrapper = styled.div`
   font-family: 'Arial', sans-serif;
@@ -30,6 +31,7 @@ const App = () => {
         <MainContent>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/products" element={<ProductList />} />
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/product/:id" element={<ProductPage />} />
