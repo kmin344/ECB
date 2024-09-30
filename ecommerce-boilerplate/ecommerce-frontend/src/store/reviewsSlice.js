@@ -1,26 +1,34 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getReviews, postReview } from '../services/api';
+import api from '../services/api';
 
 export const fetchReviews = createAsyncThunk(
   'reviews/fetchReviews',
-  async (productId) => {
-    const response = await getReviews(productId);
-    return response.data;
+  async (productId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/products/${productId}/reviews`);
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
+    }
   }
 );
 
 export const submitReview = createAsyncThunk(
   'reviews/submitReview',
-  async ({ productId, rating, comment }) => {
-    const response = await postReview(productId, { rating, comment });
-    return response.data;
+  async ({ productId, review }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/products/${productId}/reviews`, review);
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
+    }
   }
 );
 
 const reviewsSlice = createSlice({
   name: 'reviews',
   initialState: {
-    reviews: [],
+    items: [],
     status: 'idle',
     error: null,
   },
@@ -32,14 +40,14 @@ const reviewsSlice = createSlice({
       })
       .addCase(fetchReviews.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.reviews = action.payload;
+        state.items = action.payload;
       })
       .addCase(fetchReviews.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message;
+        state.error = action.payload.message;
       })
       .addCase(submitReview.fulfilled, (state, action) => {
-        state.reviews.push(action.payload);
+        state.items.push(action.payload);
       });
   },
 });

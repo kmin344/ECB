@@ -5,16 +5,19 @@ import { fetchReviews, submitReview } from '../store/reviewsSlice';
 
 const ReviewsAndRatings = ({ productId }) => {
   const dispatch = useDispatch();
-  const { reviews, status, error } = useSelector(state => state.reviews);
+  const reviewsState = useSelector(state => state.reviews);
+  const { items: reviews, status, error } = reviewsState || { items: [], status: 'idle', error: null };
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
 
   useEffect(() => {
-    dispatch(fetchReviews(productId));
-  }, [dispatch, productId]);
+    if (status === 'idle') {
+      dispatch(fetchReviews(productId));
+    }
+  }, [status, dispatch, productId]);
 
   const handleSubmitReview = (e) => {
     e.preventDefault();
-    dispatch(submitReview({ productId, ...newReview }));
+    dispatch(submitReview({ productId, review: newReview }));
     setNewReview({ rating: 5, comment: '' });
   };
 
