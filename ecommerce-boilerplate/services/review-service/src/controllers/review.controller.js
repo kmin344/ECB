@@ -1,56 +1,94 @@
 const Review = require('../models/review.model');
+const Product = require('../models/product.model');
 const logger = require('../utils/logger');
 
-exports.create = async (req, res, next) => {
+exports.createReview = async (req, res) => {
   try {
-    const newReview = new Review(req.body);
-    const savedReview = await newReview.save();
-    res.status(201).json(savedReview);
+    const { productId, rating, comment } = req.body;
+    const userId = req.user.id; // Assuming we have user info from auth middleware
+
+    const newReview = new Review({
+      productId,
+      userId,
+      rating,
+      comment
+    });
+
+    await newReview.save();
+
+    // Update product's average rating
+    await updateProductRating(productId);
+
+    logger.info(`New review created for product ${productId} by user ${userId}`);
+    res.status(201).json(newReview);
   } catch (error) {
-    logger.error('Error in create review:', error);
-    next(error);
+    logger.error('Error creating review:', error);
+    res.status(500).json({ message: 'Error creating review', error: error.message });
   }
 };
 
-exports.getAll = async (req, res, next) => {
+exports.getReviewsForProduct = async (req, res) => {
   try {
-    const reviews = await Review.find();
+    const { productId } = req.params;
+    const reviews = await Review.find({ productId }).populate('userId', 'name');
     res.json(reviews);
   } catch (error) {
-    logger.error('Error in getAll reviews:', error);
-    next(error);
+    logger.error('Error fetching reviews:', error);
+    res.status(500).json({ message: 'Error fetching reviews', error: error.message });
   }
 };
 
-exports.getById = async (req, res, next) => {
+exports.updateReview = async (req, res) => {
   try {
-    const review = await Review.findById(req.params.id);
-    if (!review) return res.status(404).json({ message: 'Review not found' });
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+    const userId = req.user.id;
+
+    const review = await Review.findOneAndUpdate(
+      { _id: id, userId },
+      { rating, comment, updatedAt: Date.now() },
+      { new: true }
+    );
+
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found or user not authorized' });
+    }
+
+    await updateProductRating(review.productId);
+
+    logger.info(`Review ${id} updated by user ${userId}`);
     res.json(review);
   } catch (error) {
-    logger.error('Error in getById review:', error);
-    next(error);
+    logger.error('Error updating review:', error);
+    res.status(500).json({ message: 'Error updating review', error: error.message });
   }
 };
 
-exports.update = async (req, res, next) => {
+exports.deleteReview = async (req, res) => {
   try {
-    const updatedReview = await Review.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updatedReview) return res.status(404).json({ message: 'Review not found' });
-    res.json(updatedReview);
-  } catch (error) {
-    logger.error('Error in update review:', error);
-    next(error);
-  }
-};
+    const { id } = req.params;
+    const userId = req.user.id;
 
-exports.delete = async (req, res, next) => {
-  try {
-    const deletedReview = await Review.findByIdAndDelete(req.params.id);
-    if (!deletedReview) return res.status(404).json({ message: 'Review not found' });
+    const review = await Review.findOneAndDelete({ _id: id, userId });
+
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found or user not authorized' });
+    }
+
+    await updateProductRating(review.productId);
+
+    logger.info(`Review ${id} deleted by user ${userId}`);
     res.json({ message: 'Review deleted successfully' });
   } catch (error) {
-    logger.error('Error in delete review:', error);
-    next(error);
+    logger.error('Error deleting review:', error);
+    res.status(500).json({ message: 'Error deleting review', error: error.message });
   }
 };
+
+async function updateProductRating(productId) {
+  const reviews = await Review.find({ productId });
+  const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+  const averageRating = reviews.length > 0 ? totalRating / reviews.length : 0;
+
+  await Product.findByIdAndUpdate(productId, { averageRating });
+}
