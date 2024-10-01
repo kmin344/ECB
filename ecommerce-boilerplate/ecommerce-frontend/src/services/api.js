@@ -55,18 +55,18 @@ export const getProduct = (id) => api.get(`/products/${id}`);
 
 // Related products
 export const getRelatedProducts = (productId, category) => {
-  return axios.get(`${API_URL}/products/related`, {
+  return api.get(`${API_URL}/products/related`, {
     params: { productId, category }
   });
 };
 
 // Reviews
 export const getReviews = (productId) => {
-  return axios.get(`${API_URL}/reviews/product/${productId}`);
+  return api.get(`${API_URL}/reviews/product/${productId}`);
 };
 
 export const postReview = (productId, reviewData) => {
-  return axios.post(`${API_URL}/reviews`, reviewData);
+  return api.post(`${API_URL}/reviews`, reviewData);
 };
 
 // Cart
