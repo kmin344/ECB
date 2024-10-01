@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 
 // Routes
-app.use('/api/products/:productId/reviews', reviewRoutes);
+app.use('/', reviewRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

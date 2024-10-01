@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../services/api';
+import api, { getReviews, postReview } from '../services/api';
 
 export const fetchReviews = createAsyncThunk(
   'reviews/fetchReviews',
   async (productId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/products/${productId}/reviews`);
+      const response = await getReviews(productId);
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response.data);
@@ -17,7 +17,7 @@ export const submitReview = createAsyncThunk(
   'reviews/submitReview',
   async ({ productId, review }, { rejectWithValue }) => {
     try {
-      const response = await api.post(`/products/${productId}/reviews`, review);
+      const response = await postReview(productId, review);
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response.data);

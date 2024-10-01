@@ -62,11 +62,11 @@ export const getRelatedProducts = (productId, category) => {
 
 // Reviews
 export const getReviews = (productId) => {
-  return axios.get(`${API_URL}/products/${productId}/reviews`);
+  return axios.get(`${API_URL}/reviews/product/${productId}`);
 };
 
 export const postReview = (productId, reviewData) => {
-  return axios.post(`${API_URL}/products/${productId}/reviews`, reviewData);
+  return axios.post(`${API_URL}/reviews`, reviewData);
 };
 
 // Cart
