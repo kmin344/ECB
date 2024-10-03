@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProductById } from '../store/productsSlice';
+import { addToCart } from '../store/cartSlice';
 import { StarIcon } from '@heroicons/react/24/solid';
 import RelatedProducts from '../components/RelatedProducts';
 import ReviewsAndRatings from '../components/ReviewsAndRatings';
@@ -10,10 +11,25 @@ const Product = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { currentProduct, status, error } = useSelector(state => state.products);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     dispatch(fetchProductById(id));
   }, [dispatch, id]);
+
+  const handleAddToCart = () => {
+    if (currentProduct) {
+      dispatch(addToCart({
+        id: currentProduct._id,
+        name: currentProduct.name,
+        price: currentProduct.price,
+        thumbnail: currentProduct.thumbnail,
+        quantity: quantity
+      }));
+      // Optionally, you can add a toast notification here to inform the user
+      alert('Product added to cart!');
+    }
+  };
 
   if (status === 'loading') {
     return <div className="text-center mt-8">Loading...</div>;
@@ -69,7 +85,21 @@ const Product = () => {
             )}
           </div>
           <p className="text-gray-700 mb-4">{description}</p>
-          <button className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-300">
+          <div className="flex items-center mb-4">
+            <label htmlFor="quantity" className="mr-2">Quantity:</label>
+            <input
+              type="number"
+              id="quantity"
+              min="1"
+              value={quantity}
+              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))}
+              className="w-16 px-2 py-1 border rounded"
+            />
+          </div>
+          <button 
+            onClick={handleAddToCart}
+            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-300"
+          >
             Add to Cart
           </button>
         </div>
