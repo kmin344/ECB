@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../services/api';
+import api, {updateProfile} from '../services/api';
 
 export const updateUserProfile = createAsyncThunk(
   'user/updateProfile',
   async (profileData, { rejectWithValue }) => {
     try {
-      const response = await api.put('/user/profile', profileData);
+      const response = await updateProfile(profileData);
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response.data);
