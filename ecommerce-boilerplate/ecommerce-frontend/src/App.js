@@ -9,6 +9,8 @@ import ProductPage from './pages/Product';
 import Cart from './pages/Cart';
 import Profile from './components/Profile';
 import ProductList from './components/ProductList';
+import Checkout from './pages/Checkout';
+import OrderConfirmation from './pages/OrderConfirmation';
 import { Provider } from 'react-redux';
 import {store} from './store';
 import Login from './pages/Login';
@@ -37,6 +39,8 @@ const App = () => {
             <Route path="/product/:id" element={<ProductPage />} />
             {/* <Route path="/membership-benefits" element={<MembershipBenefits />} /> */}
             <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
             <Route path="/profile" element={<Profile />} />
           </Routes>
         </MainContent>
