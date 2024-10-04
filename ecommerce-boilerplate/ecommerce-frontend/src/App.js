@@ -7,7 +7,7 @@ import ShopPage from './pages/Shop';
 // import MembershipBenefits from './pages/MembershipBenefits';
 import ProductPage from './pages/Product';
 import Cart from './pages/Cart';
-import Profile from './components/Profile';
+import Profile from './pages/Profile';
 import ProductList from './components/ProductList';
 import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
