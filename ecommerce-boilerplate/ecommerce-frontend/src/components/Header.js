@@ -16,7 +16,7 @@ const Header = () => {
       </Link>
       <div className="flex space-x-4">
         <button>Search</button>
-        <button>Account</button>
+        <Link to="/profile"><button>Account</button></Link>
         <Link to="/cart"><button>Cart</button></Link>
       </div>
     </header>
