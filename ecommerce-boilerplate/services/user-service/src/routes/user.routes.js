@@ -10,4 +10,6 @@ router.get('/:userId', userController.getUserById);
 router.put('/:userId', userController.updateUser);
 router.delete('/:userId', userController.deleteUser);
 
+router.get('/:userId/profile-with-orders', userController.getUserProfileWithOrders);
+
 module.exports = router;

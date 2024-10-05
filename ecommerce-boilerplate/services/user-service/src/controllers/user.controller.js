@@ -59,3 +59,40 @@ exports.deleteUser = async (req, res) => {
     res.status(500).send({ message: 'Error deleting user', error: error.message });
   }
 };
+
+exports.getUserProfileWithOrders = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    // Fetch user profile
+    const user = await User.findById(userId, '-password');
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    // Fetch user's orders from order-service
+    let orders;
+    try {
+      const orderServiceResponse = await axios.get(`${process.env.ORDER_SERVICE_URL}/internal/orders/${userId}`, {
+        headers: {
+          'Internal-Auth-Token': process.env.INTERNAL_AUTH_TOKEN
+        }
+      });
+      orders = orderServiceResponse.data;
+    } catch (orderError) {
+      console.error('Error fetching orders:', orderError);
+      orders = { error: 'Unable to fetch orders at this time' };
+    }
+
+    // Combine user profile with orders
+    const userProfileWithOrders = {
+      ...user.toObject(),
+      orders
+    };
+
+    res.status(200).send(userProfileWithOrders);
+  } catch (error) {
+    console.error('Error in getUserProfileWithOrders:', error);
+    res.status(500).send({ message: 'Error fetching user profile and orders', error: error.message });
+  }
+};
