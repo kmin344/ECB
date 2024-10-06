@@ -4,7 +4,7 @@ import { updateUserProfile, fetchUserProfileWithOrders } from '../store/userSlic
 
 const Profile = () => {
   const dispatch = useDispatch();
-  const { profile, orders, status } = useSelector(state => state.user);
+  const userState = useSelector(state => state.user);
   const [editing, setEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: '',
@@ -18,15 +18,15 @@ const Profile = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (profile) {
+    if (userState && userState.profile) {
       setProfileData({
-        name: profile.name || '',
-        email: profile.email || '',
-        phone: profile.phone || '',
-        address: profile.address || ''
+        name: userState.profile.name || '',
+        email: userState.profile.email || '',
+        phone: userState.profile.phone || '',
+        address: userState.profile.address || ''
       });
     }
-  }, [profile]);
+  }, [userState]);
 
   const handleInputChange = (e) => {
     setProfileData({ ...profileData, [e.target.name]: e.target.value });
@@ -38,8 +38,9 @@ const Profile = () => {
     setEditing(false);
   };
 
-  if (status === 'loading') return <div>Loading...</div>;
-  if (status === 'failed') return <div>Error loading profile. Please try again.</div>;
+  if (!userState) return <div>Loading...</div>;
+  if (userState.status === 'loading') return <div>Loading...</div>;
+  if (userState.status === 'failed') return <div>Error loading profile. Please try again.</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -70,9 +71,9 @@ const Profile = () => {
 
       <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <h2 className="text-2xl font-bold mb-4">Order History</h2>
-        {orders.length > 0 ? (
+        {userState.orders && userState.orders.length > 0 ? (
           <ul>
-            {orders.map(order => (
+            {userState.orders.map(order => (
               <li key={order.id} className="mb-4 p-4 border rounded">
                 <p><strong>Order ID:</strong> {order.id}</p>
                 <p><strong>Date:</strong> {new Date(order.date).toLocaleDateString()}</p>
