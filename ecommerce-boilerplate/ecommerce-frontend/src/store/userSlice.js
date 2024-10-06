@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api, {updateProfile} from '../services/api';
+import api, { updateProfile } from '../services/api';
 
 export const updateUserProfile = createAsyncThunk(
   'user/updateProfile',
@@ -13,11 +13,11 @@ export const updateUserProfile = createAsyncThunk(
   }
 );
 
-export const fetchUserOrders = createAsyncThunk(
-  'user/fetchOrders',
-  async (_, { rejectWithValue }) => {
+export const fetchUserProfileWithOrders = createAsyncThunk(
+  'user/fetchProfileWithOrders',
+  async (userId, { rejectWithValue }) => {
     try {
-      const response = await api.get('/user/orders');
+      const response = await api.get(`/users/${userId}/profile-with-orders`);
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response.data);
@@ -28,7 +28,7 @@ export const fetchUserOrders = createAsyncThunk(
 const userSlice = createSlice({
   name: 'user',
   initialState: {
-    user: null,
+    profile: null,
     orders: [],
     status: 'idle',
     error: null,
@@ -43,20 +43,21 @@ const userSlice = createSlice({
       })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.user = action.payload;
+        state.profile = action.payload;
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       })
-      .addCase(fetchUserOrders.pending, (state) => {
+      .addCase(fetchUserProfileWithOrders.pending, (state) => {
         state.status = 'loading';
       })
-      .addCase(fetchUserOrders.fulfilled, (state, action) => {
+      .addCase(fetchUserProfileWithOrders.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.orders = action.payload;
+        state.profile = action.payload;
+        state.orders = action.payload.orders;
       })
-      .addCase(fetchUserOrders.rejected, (state, action) => {
+      .addCase(fetchUserProfileWithOrders.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       });
