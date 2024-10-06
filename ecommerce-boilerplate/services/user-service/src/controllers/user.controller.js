@@ -63,11 +63,16 @@ exports.deleteUser = async (req, res) => {
 exports.getUserProfileWithOrders = async (req, res) => {
   try {
     const userId = req.params.userId;
+
+    // Check if userId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
     
     // Fetch user profile
     const user = await User.findById(userId, '-password');
     if (!user) {
-      return res.status(404).send({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     // Fetch user's orders from order-service
@@ -90,9 +95,9 @@ exports.getUserProfileWithOrders = async (req, res) => {
       orders
     };
 
-    res.status(200).send(userProfileWithOrders);
+    res.status(200).json(userProfileWithOrders);
   } catch (error) {
     console.error('Error in getUserProfileWithOrders:', error);
-    res.status(500).send({ message: 'Error fetching user profile and orders', error: error.message });
+    res.status(500).json({ message: 'Error fetching user profile and orders', error: error.message });
   }
 };
