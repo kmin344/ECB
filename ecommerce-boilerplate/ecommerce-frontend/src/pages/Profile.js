@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateUserProfile, fetchUserProfileWithOrders } from '../store/userSlice';
+import { fetchMe } from '../store/authSlice';
 import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
@@ -17,7 +18,12 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    console.log(authState);
+    if (!authState.user && authState.status !== 'loading') {
+      dispatch(fetchMe());
+    }
+  }, [authState.user, authState.status, dispatch]);
+
+  useEffect(() => {
     if (authState.user && authState.user._id) {
       dispatch(fetchUserProfileWithOrders(authState.user._id));
       setProfileData({

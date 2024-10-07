@@ -21,6 +21,18 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+export const fetchMe = createAsyncThunk(
+  'user/fetchMe',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/auth/me`);
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -49,6 +61,10 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.status = 'idle';
+      })
+      .addCase(fetchMe.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.status = 'succeeded';
       });
   }
 });
