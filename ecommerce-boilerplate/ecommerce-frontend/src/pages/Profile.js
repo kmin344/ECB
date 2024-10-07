@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateUserProfile, fetchUserProfileWithOrders } from '../store/userSlice';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const userState = useSelector(state => state.user);
+  const authState = useSelector(state => state.auth);
   const [editing, setEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: '',
@@ -14,8 +17,13 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    dispatch(fetchUserProfileWithOrders());
-  }, [dispatch]);
+    if (authState.user && authState.user._id) {
+      dispatch(fetchUserProfileWithOrders(authState.user._id));
+    } else if (!authState.token) {
+      // Redirect to login if there's no token
+      navigate('/login');
+    }
+  }, [dispatch, authState.user, authState.token, navigate]);
 
   useEffect(() => {
     if (userState && userState.profile) {
@@ -38,8 +46,8 @@ const Profile = () => {
     setEditing(false);
   };
 
-  if (!userState) return <div>Loading...</div>;
-  if (userState.status === 'loading') return <div>Loading...</div>;
+  if (!authState.user) return <div>Loading...</div>;
+  if (userState.status === 'loading') return <div>Loading profile...</div>;
   if (userState.status === 'failed') return <div>Error loading profile. Please try again.</div>;
 
   return (
