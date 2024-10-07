@@ -4,8 +4,10 @@ import { logoutUser } from '../store/authSlice';
 const Logout = async () => {
   const dispatch = useDispatch();
 
+  const handleLogout = () => dispatch(logoutUser());
+
   try {
-    await dispatch(logoutUser()).unwrap();
+    await handleLogout();
   } catch (err) {
     console.error('Failed to log in: ', err);
   }
