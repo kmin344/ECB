@@ -20,6 +20,12 @@ const Profile = () => {
     console.log(authState);
     if (authState.user && authState.user._id) {
       dispatch(fetchUserProfileWithOrders(authState.user._id));
+      setProfileData({
+        name: authState.user.name || '',
+        email: authState.user.email || '',
+        phone: authState.user.phone || '',
+        address: authState.user.address || ''
+      });
     } else if (!authState.token) {
       // Redirect to login if there's no token
       navigate('/login');
