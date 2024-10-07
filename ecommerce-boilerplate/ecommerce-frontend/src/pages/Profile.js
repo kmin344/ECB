@@ -17,6 +17,7 @@ const Profile = () => {
   });
 
   useEffect(() => {
+    console.log(authState);
     if (authState.user && authState.user._id) {
       dispatch(fetchUserProfileWithOrders(authState.user._id));
     } else if (!authState.token) {
