@@ -14,6 +14,7 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import { Provider } from 'react-redux';
 import {store} from './store';
 import Login from './pages/Login';
+import Logout from './pages/Logout';
 
 const AppWrapper = styled.div`
   font-family: 'Arial', sans-serif;
@@ -34,6 +35,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/logout" element={<Logout />} />
             <Route path="/products" element={<ProductList />} />
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/product/:id" element={<ProductPage />} />
