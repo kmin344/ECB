@@ -71,7 +71,8 @@ exports.getUserProfileWithOrders = async (req, res) => {
     }
     
     // Fetch user profile
-    const user = await User.findById(userId);
+    console.log('Fetching user profile', userId);
+    const user = await User.findById(userId, '-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
