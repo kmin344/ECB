@@ -71,7 +71,7 @@ exports.getUserProfileWithOrders = async (req, res) => {
     
     // Fetch user profile
     console.log('Fetching user profile', userId);
-    const user = await User.findById(userId);
+    const user = await User.findById(userId, '-password');
     console.log('User:', user);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -80,7 +80,7 @@ exports.getUserProfileWithOrders = async (req, res) => {
     // Fetch user's orders from order-service
     let orders;
     try {
-      const orderServiceResponse = await axios.get(`${process.env.ORDER_SERVICE_URL}/internal/orders/${userId}`, {
+      const orderServiceResponse = await axios.get(`orders/${userId}`, {
         headers: {
           'Internal-Auth-Token': process.env.INTERNAL_AUTH_TOKEN
         }
