@@ -1,4 +1,3 @@
-// services/user-service/controllers/user.controller.js
 const User = require('../models/user.model');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
