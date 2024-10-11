@@ -2,7 +2,7 @@
 
 const mongoose = require('mongoose');
 const { users } = require('../data/seed-data');
-const User = require('../models/user');
+const User = require('../src/models/user');
 
 const seedDatabase = async () => {
   try {
