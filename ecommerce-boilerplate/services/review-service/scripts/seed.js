@@ -6,7 +6,7 @@ const Review = require('../src/models/review.model');
 
 const seedDatabase = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
+    await mongoose.connect('mongodb://mongo:27017/review_db', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
