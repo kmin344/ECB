@@ -1,5 +1,3 @@
-// review-service/data/seed-data.js
-
 const mongoose = require('mongoose');
 
 const reviews = [
