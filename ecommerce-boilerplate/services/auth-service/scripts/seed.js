@@ -1,5 +1,3 @@
-// auth-service/scripts/seed.js
-
 const mongoose = require('mongoose');
 const { users } = require('../data/seed-data');
 const User = require('./src/models/user');
