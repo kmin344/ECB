@@ -1,5 +1,3 @@
-// order-service/scripts/seed.js
-
 const mongoose = require('mongoose');
 const { orders } = require('../data/seed-data');
 const Order = require('./src/models/order');
