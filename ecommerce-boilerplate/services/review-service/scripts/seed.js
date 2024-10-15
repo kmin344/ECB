@@ -1,5 +1,3 @@
-// review-service/scripts/seed.js
-
 const mongoose = require('mongoose');
 const { reviews } = require('../data/seed-data');
 const Review = require('../src/models/review.model');
