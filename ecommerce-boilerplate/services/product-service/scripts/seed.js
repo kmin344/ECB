@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { products } = require('../data/seed-data');
-const Product = require('./src/models/product');
+const Product = require('./src/models/product.model');
 
 const seedDatabase = async () => {
   try {
