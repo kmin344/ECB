@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 const { products } = require('../data/seed-data');
-const Product = require('./src/models/product.model');
+const Product = require('../src/models/product.model');
 
 const seedDatabase = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://mongo:27017/product-service', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
