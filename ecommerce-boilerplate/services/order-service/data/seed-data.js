@@ -1,25 +1,45 @@
+// order-service/data/seed-data.js
+
 const mongoose = require('mongoose');
+
+// We'll use the user and product IDs from the other services
+const userIds = {
+  john: new mongoose.Types.ObjectId(),
+  jane: new mongoose.Types.ObjectId()
+};
+
+const productIds = {
+  smartphone: new mongoose.Types.ObjectId(),
+  tshirt: new mongoose.Types.ObjectId(),
+  coffee: new mongoose.Types.ObjectId()
+};
 
 const orders = [
   {
     _id: new mongoose.Types.ObjectId(),
-    user: new mongoose.Types.ObjectId(), // You'll need to replace this with actual user IDs
+    user: userIds.john,
     products: [
-      { product: new mongoose.Types.ObjectId(), quantity: 1 }, // Replace with actual product IDs
-      { product: new mongoose.Types.ObjectId(), quantity: 2 }
+      { product: productIds.smartphone, quantity: 1 },
+      { product: productIds.coffee, quantity: 2 }
     ],
     totalAmount: 1029.97,
-    status: 'Completed'
+    status: 'delivered',
+    shippingAddress: '123 Main St, Anytown, AN 12345',
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     _id: new mongoose.Types.ObjectId(),
-    user: new mongoose.Types.ObjectId(), // You'll need to replace this with actual user IDs
+    user: userIds.jane,
     products: [
-      { product: new mongoose.Types.ObjectId(), quantity: 3 } // Replace with actual product IDs
+      { product: productIds.tshirt, quantity: 3 }
     ],
     totalAmount: 59.97,
-    status: 'Processing'
+    status: 'processing',
+    shippingAddress: '456 Oak Rd, Other City, OC 67890',
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 ];
 
-module.exports = { orders };
+module.exports = { orders, userIds, productIds };
