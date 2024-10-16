@@ -81,9 +81,9 @@ exports.getUserProfileWithOrders = async (req, res) => {
     let orders;
     try {
       const orderServiceResponse = await axios.get(`orders/${userId}`, {
-        headers: {
-          'Internal-Auth-Token': process.env.INTERNAL_AUTH_TOKEN
-        }
+        // headers: {
+        //   'Internal-Auth-Token': process.env.INTERNAL_AUTH_TOKEN
+        // }
       });
       orders = orderServiceResponse.data;
     } catch (orderError) {
