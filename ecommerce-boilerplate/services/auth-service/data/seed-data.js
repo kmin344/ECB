@@ -7,14 +7,14 @@ const users = [
     username: 'john_doe',
     email: 'john@example.com',
     password: bcrypt.hashSync('password123', 10),
-    role: 'customer'
+    role: 'user'
   },
   {
     _id: new mongoose.Types.ObjectId(),
     username: 'jane_smith',
     email: 'jane@example.com',
     password: bcrypt.hashSync('password456', 10),
-    role: 'customer'
+    role: 'user'
   },
   {
     _id: new mongoose.Types.ObjectId(),
