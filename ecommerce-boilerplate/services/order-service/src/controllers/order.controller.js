@@ -27,9 +27,19 @@ exports.createOrder = async (req, res) => {
 // Retrieve all Orders from the database
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate('user', 'name email') // Populate user data
-      .populate('products.product', 'name price'); // Populate product data
+    // const user = await UserActivation.findById(req.userId);
+    // if (!user) {
+    //   return res.status(404).send({
+    //     message: "User not found with id " + req.userId
+    //   });
+    // }
+
+    console.log(req.params.userId);
+    const orders = await Order.find({
+      user: req.params.userId
+    })
+      // .populate('user', 'name email') // Populate user data
+      // .populate('products.product', 'name price'); // Populate product data
     res.json(orders);
   } catch (error) {
     res.status(500).send({
