@@ -9,7 +9,7 @@ router.use(verifyToken);
 router.post('/', orderController.createOrder);
 
 // Retrieve all orders
-router.get('/', orderController.getAllOrders);
+router.get('/:userId', orderController.getAllOrders);
 
 // Retrieve a single order with orderId
 router.get('/:orderId', orderController.getOrderById);
