@@ -1,6 +1,13 @@
 const User = require('../models/user.model');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
+const axios = require('axios');
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost/api';
+
+const api = axios.create({
+  baseURL: API_URL,
+});
 
 exports.createUser = async (req, res) => {
   try {
@@ -80,7 +87,7 @@ exports.getUserProfileWithOrders = async (req, res) => {
     // Fetch user's orders from order-service
     let orders;
     try {
-      const orderServiceResponse = await axios.get(`orders/${userId}`, {
+      const orderServiceResponse = await api.get(`orders/${userId}`, {
         // headers: {
         //   'Internal-Auth-Token': process.env.INTERNAL_AUTH_TOKEN
         // }
