@@ -88,9 +88,9 @@ exports.getUserProfileWithOrders = async (req, res) => {
     let orders;
     try {
       const orderServiceResponse = await api.get(`orders/${userId}`, {
-        // headers: {
-        //   'Internal-Auth-Token': process.env.INTERNAL_AUTH_TOKEN
-        // }
+        headers: {
+          Authorization: req.headers.authorization
+        }
       });
       orders = orderServiceResponse.data;
     } catch (orderError) {
