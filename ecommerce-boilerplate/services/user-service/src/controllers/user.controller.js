@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const axios = require('axios');
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://order-service:3000';
 
 const api = axios.create({
   baseURL: API_URL,
