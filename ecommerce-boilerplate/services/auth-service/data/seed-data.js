@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 
 const users = [
   {
-    _id: new mongoose.Types.ObjectId(),
+    _id: '670fad196f59863e18429e6f',
     username: 'john_doe',
     email: 'john@example.com',
     password: bcrypt.hashSync('password123', 10),
