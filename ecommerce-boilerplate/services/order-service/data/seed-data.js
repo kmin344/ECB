@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 
 // We'll use the user and product IDs from the other services
 const userIds = {
-  john: new mongoose.Types.ObjectId(),
+  john: '670fad196f59863e18429e6f',
   jane: new mongoose.Types.ObjectId()
 };
 
