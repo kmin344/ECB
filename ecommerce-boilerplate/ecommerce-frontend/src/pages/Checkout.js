@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { clearCart } from '../store/cartSlice';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Checkout = () => {
   const [step, setStep] = useState(1);
@@ -21,6 +22,7 @@ const Checkout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items, total } = useSelector(state => state.cart);
+  const user = useSelector(state => state.user); // Assuming you have user state in Redux
 
   const handleShippingSubmit = (e) => {
     e.preventDefault();
@@ -32,11 +34,32 @@ const Checkout = () => {
     setStep(3);
   };
 
-  const handleOrderPlacement = () => {
-    // Here you would typically send the order to your backend
-    console.log('Order placed:', { items, total, shippingInfo, paymentInfo });
-    dispatch(clearCart());
-    navigate('/order-confirmation');
+  const handleOrderPlacement = async () => {
+    try {
+      const orderData = {
+        user: user.id,
+        products: items.map(item => ({
+          product: item.id,
+          quantity: item.quantity
+        })),
+        totalAmount: total,
+        shippingAddress: `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`
+      };
+
+      const response = await axios.post('/api/orders', orderData);
+      
+      if (response.status === 201) {
+        console.log('Order placed successfully:', response.data);
+        dispatch(clearCart());
+        navigate('/order-confirmation', { state: { orderId: response.data._id } });
+      } else {
+        console.error('Error placing order:', response.data);
+        alert('There was an error placing your order. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error placing order:', error);
+      alert('There was an error placing your order. Please try again.');
+    }
   };
 
   const renderStepContent = () => {
