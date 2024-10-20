@@ -4,7 +4,11 @@ const Order = require('../models/order.model');
 exports.createOrder = async (req, res) => {
   try {
     console.log('Received order data:', req.body);
-    const { user, products, totalAmount, shippingAddress } = req.body;
+    const { products, totalAmount, shippingAddress } = req.body;
+
+    const token = req.headers.authorization.split(' ')[1];
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const user = { userId: decodedToken.userId };
 
     const newOrder = new Order({
       user,
