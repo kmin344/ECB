@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { clearCart } from '../store/cartSlice';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 
 const Checkout = () => {
   const [step, setStep] = useState(1);
@@ -46,7 +46,7 @@ const Checkout = () => {
         shippingAddress: `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`
       };
 
-      const response = await axios.post('/api/orders', orderData);
+      const response = await api.post('/orders', orderData);
       
       if (response.status === 201) {
         console.log('Order placed successfully:', response.data);
