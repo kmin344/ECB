@@ -10,6 +10,8 @@ exports.createOrder = async (req, res) => {
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
     const user = { userId: decodedToken.userId };
 
+    console.log('User:', user);
+
     const newOrder = new Order({
       user,
       products,
