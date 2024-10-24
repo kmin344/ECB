@@ -40,9 +40,12 @@ exports.getAllOrders = async (req, res) => {
     //   });
     // }
 
+    console.log('User ID:', req.params.userId);
     const orders = await Order.find({
       user: req.params.userId
     })
+
+
       // .populate('user', 'name email') // Populate user data
       // .populate('products.product', 'name price'); // Populate product data
     res.json(orders);
