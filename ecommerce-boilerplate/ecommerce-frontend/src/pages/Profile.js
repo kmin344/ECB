@@ -98,7 +98,7 @@ const Profile = () => {
               <li key={order.id} className="mb-4 p-4 border rounded">
                 <p><strong>Order ID:</strong> {order.id}</p>
                 <p><strong>Date:</strong> {new Date(order.date).toLocaleDateString()}</p>
-                <p><strong>Total:</strong> ${order.total.toFixed(2)}</p>
+                <p><strong>Total:</strong> ${order.totalAmount.toFixed(2)}</p>
                 <p><strong>Status:</strong> {order.status}</p>
               </li>
             ))}
