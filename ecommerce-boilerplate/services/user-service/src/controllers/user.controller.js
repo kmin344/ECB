@@ -87,7 +87,7 @@ exports.getUserProfileWithOrders = async (req, res) => {
     // Fetch user's orders from order-service
     let orders;
     try {
-      const orderServiceResponse = await api.get(`orders/${userId}`, {
+      const orderServiceResponse = await api.get(`/user/${userId}`, {
         headers: {
           Authorization: req.headers.authorization
         }
