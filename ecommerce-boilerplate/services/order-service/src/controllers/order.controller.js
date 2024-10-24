@@ -1,4 +1,7 @@
 const Order = require('../models/order.model');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Create and Save a new Order
 exports.createOrder = async (req, res) => {
@@ -7,13 +10,10 @@ exports.createOrder = async (req, res) => {
     const { products, totalAmount, shippingAddress } = req.body;
 
     const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-    const user = { userId: decodedToken.userId };
-
-    console.log('User:', user);
+    const decodedToken = jwt.verify(token, JWT_SECRET);
 
     const newOrder = new Order({
-      user,
+      user: decodedToken.userId,
       products,
       totalAmount,
       shippingAddress
