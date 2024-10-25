@@ -8,6 +8,7 @@ const EventSection = () => {
     { id: 2, name: "Product 2", price: 39000, image: "https://cdn.imweb.me/thumbnail/20240607/ebc866450cfd0.jpg" },
     { id: 3, name: "Product 3", price: 39000, image: "https://cdn.imweb.me/thumbnail/20240607/ebc866450cfd0.jpg" },
     { id: 3, name: "Product 3", price: 39000, image: "https://cdn.imweb.me/thumbnail/20240607/ebc866450cfd0.jpg" },
+    { id: 3, name: "Product 3", price: 39000, image: "https://cdn.imweb.me/thumbnail/20240607/ebc866450cfd0.jpg" },
     // Add more products as needed
   ];
 
