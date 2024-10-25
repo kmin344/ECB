@@ -6,6 +6,7 @@ const EventSection = () => {
   const products = [
     { id: 1, name: "Product 1", price: 29000, image: "https://cdn.imweb.me/thumbnail/20240606/07924e4e9b363.jpg" },
     { id: 2, name: "Product 2", price: 39000, image: "https://cdn.imweb.me/thumbnail/20240607/ebc866450cfd0.jpg" },
+    { id: 3, name: "Product 3", price: 39000, image: "https://cdn.imweb.me/thumbnail/20240607/ebc866450cfd0.jpg" },
     // Add more products as needed
   ];
 
