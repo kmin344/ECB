@@ -15,6 +15,7 @@ const Profile = () => {
     email: '',
     phone: '',
     address: ''
+    address: ''
   });
 
   useEffect(() => {
