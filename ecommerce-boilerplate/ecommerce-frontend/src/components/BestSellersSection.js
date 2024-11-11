@@ -24,6 +24,7 @@ const BestSellersSection = () => {
     { id: 2, name: "Best Seller 2", price: 49000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.2, reviews: 85 },
     { id: 3, name: "Best Seller 3", price: 44000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.8, reviews: 200 },
     { id: 4, name: "Best Seller 4", price: 52000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.0, reviews: 150 },
+    { id: 4, name: "Best Seller 4", price: 52000, image: "https://cdn.imweb.me/thumbnail/20240606/9bded7c6993db.jpg", rating: 4.0, reviews: 150 },
 
   ];
 
