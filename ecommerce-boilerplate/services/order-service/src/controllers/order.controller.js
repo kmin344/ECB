@@ -40,7 +40,6 @@ exports.getAllOrders = async (req, res) => {
     //   });
     // }
 
-    console.log('User ID:', req.params.userId);
     const orders = await Order.find({
       user: req.params.userId
     })
