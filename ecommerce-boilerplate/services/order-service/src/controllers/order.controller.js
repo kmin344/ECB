@@ -19,7 +19,6 @@ exports.createOrder = async (req, res) => {
       shippingAddress
     });
 
-    console.log('New order object:', newOrder);
 
     const savedOrder = await newOrder.save();
     res.status(201).json(savedOrder);
