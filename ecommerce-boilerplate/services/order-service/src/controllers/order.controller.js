@@ -6,7 +6,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 // Create and Save a new Order
 exports.createOrder = async (req, res) => {
   try {
-    console.log('Received order data:', req.body);
     const { products, totalAmount, shippingAddress } = req.body;
 
     const token = req.headers.authorization.split(' ')[1];
