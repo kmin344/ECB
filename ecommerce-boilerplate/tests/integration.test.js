@@ -15,7 +15,6 @@ async function testAuthService() {
       email: 'newuser@example.com' + random,
       password: 'newpassword123' + random
     });
-    console.log('password:', 'newpassword123' + random);
     console.log('Register Response:', registerResponse.data);
 
     // Test user login
@@ -23,7 +22,6 @@ async function testAuthService() {
       email: 'newuser@example.com' + random,
       password: 'newpassword123' + random
     });
-    console.log('Login Response:', loginResponse.data);
 
     console.log('Auth Service tests passed successfully!');
     return loginResponse.data.token;
