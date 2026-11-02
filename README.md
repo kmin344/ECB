@@ -1,91 +1,92 @@
-# E-commerce Boilerplate and Framework Development
+# ECB — E-commerce Microservices Boilerplate
 
-## Project Overview
-Developed a comprehensive e-commerce boilerplate and framework to streamline the creation of e-commerce websites for various industries including fashion, art, high-end furniture, and food & beverage. The project aimed to address recurring needs in e-commerce development, reduce setup time, and enable non-technical users to manage the platform.
+[![CI](https://github.com/kmin344/ECB/actions/workflows/ci.yml/badge.svg)](https://github.com/kmin344/ECB/actions/workflows/ci.yml)
 
-## Project Overview
-Developed a comprehensive e-commerce boilerplate and framework to streamline the creation of e-commerce websites for various industries including fashion, art, high-end furniture, and food & beverage. The project aimed to address recurring needs in e-commerce development, reduce setup time, and enable non-technical users to manage the platform.
+A Dockerized e-commerce starter: seven Node.js services behind an API gateway, a React storefront, a React admin dashboard, and a CLI that scaffolds new services into the stack. One `docker compose up` brings the whole thing up locally.
 
+## Background
+
+At work I built e-commerce sites for clients in fashion, art, high-end furniture, and food & beverage. Each project started by rebuilding the same pieces: auth, catalog, cart, orders, payments, an admin panel. This repository is my open-source take on that recurring foundation, structured so a new project starts from working services instead of an empty folder, and so new domains can be added with one CLI command.
 
 ## Architecture
+
 ```mermaid
-graph TD
-    A[Developer/Designer] -->|Uses| B[CLI Tool]
-    B -->|Installs| C[E-commerce Boilerplate]
-    C -->|Deploys| D[Docker Container]
-    D --> E[Node.js Application]
-    E --> F[Web Builder Interface]
-    F -->|Customizes| G[E-commerce Website]
-    H[Non-technical User] -->|Manages| G
-    
-    I[SaaS Platform] -->|Provides Services| E
-    
-    Z[Client] -->|Request| Y[Load Balancer/Queue]
-    Y -->|Controlled Traffic| D
-
-    subgraph Docker Environment
-    D
-    E
-    F
-    G
-    end
-    
-    subgraph Boilerplate Components
-    J[Product Management]
-    K[Order Processing]
-    L[User Authentication]
-    M[Payment Integration]
-    N[Inventory Management]
-    end
-    
-    E --> J & K & L & M & N
-    E <-->|RESTful API| O[(MySQL Database)]
-    E <-->|Session Management| P[(Redis)]
-    E <-->|File Storage| Q[(AWS S3)]
-
-    subgraph Security Measures
-    R[IP Monitoring]
-    S[SSL/TLS Encryption]
-    T[Input Validation]
-    U[Rate Limiting]
-    V[Data Encryption]
-    end
-
-    style Docker Environment fill:#f9f,stroke:#333,stroke-width:2px
-    style Boilerplate Components fill:#fcf,stroke:#333,stroke-width:2px
-    style Security Measures fill:#ff9,stroke:#333,stroke-width:2px
+graph LR
+    Browser --> Nginx[Nginx :80]
+    Nginx -->|/| Store[Storefront<br/>React]
+    Nginx -->|/admin| Admin[Admin dashboard<br/>React]
+    Nginx -->|/api| GW[API gateway<br/>Express :4000]
+    GW --> Auth[auth-service]
+    GW --> Product[product-service]
+    GW --> Order[order-service]
+    GW --> Cart[cart-service]
+    GW --> Payment[payment-service]
+    GW --> Review[review-service]
+    GW --> User[user-service]
+    Auth & Product & Order & Cart & Payment & Review & User --> Mongo[(MongoDB)]
 ```
 
-## Key Challenges
-- Repetitive server setup and programming tasks for similar e-commerce needs
-- Difficulty in platform management for non-developers after implementation
-- Complexities in server management
+| Component | Stack | Path |
+|---|---|---|
+| API gateway | Express, http-proxy-middleware | `ecommerce-boilerplate/api-gateway` |
+| Services (auth, product, order, cart, payment, review, user) | Express, Mongoose, JWT | `ecommerce-boilerplate/services/*` |
+| Storefront | React, Tailwind | `ecommerce-boilerplate/ecommerce-frontend` |
+| Admin dashboard | React | `ecommerce-boilerplate/admin-dashboard` |
+| Service generator CLI | Node.js, Commander, Inquirer | `ecommerce-boilerplate/cli-tool` |
+| Reverse proxy | Nginx | `ecommerce-boilerplate/nginx` |
 
-## Technical Implementation
-- Created a boilerplate with common e-commerce functionalities
-- Developed a CLI-based framework using Node.js modules for easy installation
-- Evolved from a model file copying approach to a SaaS (Software as a Service) model
-- Implemented Docker containerization for isolated server operations
-- Designed a web builder-style, server-installable boilerplate for use by designers
+Each service owns its own MongoDB database and validates JWTs independently, so services can be deployed and scaled separately. The gateway is the only public entry point for the API.
 
-## Achievements
-- Significantly reduced development time and effort for new e-commerce projects
-- Enabled non-technical users to manage and operate e-commerce platforms
-- Improved scalability and maintainability through containerization
-- Facilitated easy customization and deployment with the web builder interface
+## Run it locally
 
-## Technologies Used
-- Node.js
-- Docker
-- CLI development
-- SaaS architecture
-- Web builder technologies
+Requires Docker.
 
-## Run
 ```bash
-chmod +x create.sh
-./create.sh
-
-chmod +x setup.sh
-./setup.sh
+cd ecommerce-boilerplate
+docker compose up -d --build
 ```
+
+- Storefront: http://localhost
+- Admin dashboard: http://localhost/admin
+- API gateway: http://localhost:4000
+
+`JWT_SECRET` in `docker-compose.yml` is a placeholder for local use. Set a real secret before deploying anywhere.
+
+## Add a new service with the CLI
+
+```bash
+cd ecommerce-boilerplate/cli-tool
+npm install && npm link
+cd ..
+add-module
+```
+
+The CLI asks for a module name and port, generates an Express service with routes, a controller, a model and a Dockerfile, and registers it in `docker-compose.yml`.
+
+## Tests
+
+- **Unit tests** (run in CI on every push): cart-service controller logic, with the database mocked.
+
+  ```bash
+  cd ecommerce-boilerplate/services/cart-service
+  npm ci && npx jest
+  ```
+
+- **Smoke test** (full stack): registers a user, logs in, and exercises products and orders through the gateway. Start the stack first, then:
+
+  ```bash
+  cd ecommerce-boilerplate
+  npm ci && npm run test:smoke
+  ```
+
+  The same smoke test runs in GitHub Actions on demand (Actions → *Smoke test (full stack)* → Run workflow).
+
+## Repository notes
+
+- `ecommerce-boilerplate/admin-dashboard-angular` is an Angular port of the admin dashboard. It is not wired into `docker-compose.yml`; the React dashboard is the one that runs.
+- `docker-compose.yml` also starts a Redis container and passes `REDIS_URL` to cart-service, but carts are currently stored in MongoDB; Redis is reserved for a planned cart cache.
+- `scripts/scaffold/` holds the shell scripts that generated the initial project skeleton. They are kept for reference only — running them overwrites `ecommerce-boilerplate/`.
+
+## License
+
+[MIT](LICENSE)
