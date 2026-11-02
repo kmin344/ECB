@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_GATEWAY_URL = 'http://localhost:4000';
+const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:4000';
 
 const random = Math.floor(Math.random() * 1000);
 
@@ -123,6 +123,7 @@ async function runTests() {
     await testOrderService(token, productId);
   } catch (error) {
     console.error('Test run failed:', error);
+    process.exitCode = 1;
   }
 }
 

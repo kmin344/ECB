@@ -4,3 +4,9 @@ coverage
 
 mongo-data
 redis-data
+# Local data volumes and build caches
+redis_data
+.angular
+*.log
+.env
+.DS_Store
