@@ -67,10 +67,13 @@ The CLI asks for a module name, generates an Express service (routes, controller
 
 - **Service tests** (run in CI on pull requests and pushes to `main`), going through the real routes and JWT middleware with signed tokens; only the Mongoose models are mocked:
   - cart-service: cart operations scoped to the user in the token
-  - user-service: role-based access (users manage only their own account; listing, creating, deleting and changing roles is admin-only)
+  - user-service: own-profile routes and role-based access (listing, creating, deleting and changing roles is admin-only)
+  - order-service: customers see only their own orders; listing all orders and changing status is admin-only
+  - review-service: moderation (admin list, approve/reject, delete) and hiding rejected reviews from the storefront
+  - product-service: related products
 
   ```bash
-  cd ecommerce-boilerplate/services/cart-service   # or user-service
+  cd ecommerce-boilerplate/services/order-service   # or cart, user, product, review
   npm ci && npx jest
   ```
 
@@ -87,7 +90,10 @@ The CLI asks for a module name, generates an Express service (routes, controller
 
 - `ecommerce-boilerplate/admin-dashboard-angular` is an Angular port of the admin dashboard. It is not wired into `docker-compose.yml`; the React dashboard is the one that runs.
 - auth, product and order are covered by the smoke test; review and payment have no automated tests yet.
-- user-service roles are stored on the user record; promote the first admin directly in MongoDB (`role: "admin"`).
+- Roles are stored on the user record and included in the JWT that auth-service signs, so order-service and review-service can check for admins without reading the users database. After changing a role, the user has to log in again. Promote the first admin directly in MongoDB (`role: "admin"`).
+- Each service owns its data, so orders and reviews reference users and products by ID; the admin dashboard shows those IDs.
+- The storefront keeps the cart in the browser (Redux); cart-service exposes the same operations as an API.
+- Payments are simulated: payment-service marks a payment as succeeded or failed at random, and checkout does not call it yet.
 - To load demo products into a running stack: `cd ecommerce-boilerplate && npm run seed`.
 - `docker-compose.yml` also starts a Redis container and passes `REDIS_URL` to cart-service, but carts are currently stored in MongoDB; Redis is reserved for a planned cart cache.
 - `scripts/scaffold/` holds the shell scripts that generated the initial project skeleton. They are kept for reference only — running them overwrites `ecommerce-boilerplate/`.

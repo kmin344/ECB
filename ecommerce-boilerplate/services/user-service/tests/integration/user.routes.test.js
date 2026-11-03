@@ -90,3 +90,24 @@ describe('own-account routes', () => {
     expect(User.findByIdAndUpdate).toHaveBeenCalledWith(BOB, { role: 'admin' }, expect.anything());
   });
 });
+
+describe('own profile (storefront)', () => {
+  it('returns the signed-in user for GET /profile, not a user with ID "profile"', async () => {
+    const res = await request(app).get('/profile').set(as(ALICE)).expect(200);
+    expect(res.body._id).toBe(ALICE);
+    expect(User.findById).toHaveBeenLastCalledWith(ALICE, '-password');
+  });
+
+  it('updates only profile fields for PUT /profile', async () => {
+    await request(app)
+      .put('/profile')
+      .set(as(ALICE))
+      .send({ name: 'Alice Kim', phone: '010-0000-0000', address: 'Seoul', role: 'admin' })
+      .expect(200);
+    expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
+      ALICE,
+      { name: 'Alice Kim', phone: '010-0000-0000', address: 'Seoul' },
+      expect.anything(),
+    );
+  });
+});

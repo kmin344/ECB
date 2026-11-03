@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Product = require('../models/product.model');
 
 // Create and Save a new Product
@@ -128,5 +129,22 @@ exports.checkAvailability = async (req, res) => {
     res.json(availability);
   } catch (error) {
     res.status(500).json({ message: 'Error checking product availability', error: error.message });
+  }
+};
+
+exports.getRelatedProducts = async (req, res) => {
+  try {
+    const { productId, category } = req.query;
+    if (!category) {
+      return res.status(400).json({ message: 'category is required' });
+    }
+    const filter = { category };
+    if (productId && mongoose.Types.ObjectId.isValid(productId)) {
+      filter._id = { $ne: productId };
+    }
+    const products = await Product.find(filter).sort({ averageRating: -1 }).limit(4);
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching related products', error: error.message });
   }
 };

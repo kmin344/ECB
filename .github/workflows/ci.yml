@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [cart-service, user-service]
+        service: [cart-service, user-service, order-service, product-service, review-service]
     defaults:
       run:
         working-directory: ecommerce-boilerplate/services/${{ matrix.service }}

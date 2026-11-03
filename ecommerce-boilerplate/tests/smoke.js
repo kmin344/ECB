@@ -52,6 +52,12 @@ async function main() {
   const update = await client.put(`/api/products/${productId}`, { stock: 15 }, { headers });
   check('update only the stock', update, 200, (d) => d.stock === 15 && d.name === 'Smoke Test Product');
 
+  const related = await client.get('/api/products/related', {
+    params: { productId, category: 'Smoke Tests' },
+    headers,
+  });
+  check('get related products', related, 200, (d) => Array.isArray(d) && !d.some((p) => p._id === productId));
+
   const availability = await client.post(
     '/api/products/check-availability',
     { products: [{ productId, quantity: 5 }] },
@@ -76,6 +82,13 @@ async function main() {
 
   const single = await client.get(`/api/orders/${order.data._id}`, { headers });
   check('get the order', single, 200, (d) => d._id === order.data._id);
+
+  const allOrders = await client.get('/api/orders', { headers });
+  check('block non-admins from listing every order', allOrders, 403);
+
+  // Profile
+  const profile = await client.put('/api/users/profile', { name: 'Smoke Tester' }, { headers });
+  check('update own profile', profile, 200, (d) => d.name === 'Smoke Tester');
 
   // Cart
   const cart = await client.post('/api/carts/items', { productId, quantity: 1 }, { headers });

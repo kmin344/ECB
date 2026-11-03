@@ -119,3 +119,35 @@ exports.getUserProfileWithOrders = async (req, res) => {
     res.status(500).json({ message: 'Error fetching user profile and orders', error: error.message });
   }
 };
+
+// The signed-in user's own profile
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id, '-password');
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+    res.status(200).send(user);
+  } catch (error) {
+    res.status(500).send({ message: 'Error fetching profile', error: error.message });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const changes = {};
+    for (const field of ['name', 'email', 'phone', 'address']) {
+      if (req.body[field] !== undefined) changes[field] = req.body[field];
+    }
+    const user = await User.findByIdAndUpdate(req.user.id, changes, { new: true, runValidators: true }).select('-password');
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+    res.status(200).send(user);
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).send({ message: error.message });
+    }
+    res.status(500).send({ message: 'Error updating profile', error: error.message });
+  }
+};

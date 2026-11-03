@@ -72,8 +72,8 @@ const Reviews = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Product</TableCell>
-              <TableCell>User</TableCell>
+              <TableCell>Product ID</TableCell>
+              <TableCell>User ID</TableCell>
               <TableCell>Rating</TableCell>
               <TableCell>Comment</TableCell>
               <TableCell>Status</TableCell>
@@ -83,8 +83,8 @@ const Reviews = () => {
           <TableBody>
             {reviews.map((review) => (
               <TableRow key={review._id}>
-                <TableCell>{review.product.name}</TableCell>
-                <TableCell>{review.user.name}</TableCell>
+                <TableCell>{review.productId}</TableCell>
+                <TableCell>{review.userId}</TableCell>
                 <TableCell>
                   <Rating value={review.rating} readOnly />
                 </TableCell>
@@ -108,8 +108,8 @@ const Reviews = () => {
         <DialogContent>
           {currentReview && (
             <>
-              <Typography variant="h6">Product: {currentReview.product.name}</Typography>
-              <Typography>User: {currentReview.user.name}</Typography>
+              <Typography variant="h6">Product: {currentReview.productId}</Typography>
+              <Typography>User: {currentReview.userId}</Typography>
               <Typography>Rating: <Rating value={currentReview.rating} readOnly /></Typography>
               <Typography>Comment: {currentReview.comment}</Typography>
               <Typography>Status: {currentReview.status}</Typography>

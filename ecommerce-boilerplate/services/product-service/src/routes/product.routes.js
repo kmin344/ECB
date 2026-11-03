@@ -11,6 +11,10 @@ router.post('/', productController.createProduct);
 // Retrieve all products
 router.get('/', productController.getAllProducts);
 
+// Products in the same category, used on the product page.
+// Declared before /:productId so "related" isn't read as an ID.
+router.get('/related', productController.getRelatedProducts);
+
 // Retrieve a single product with productId
 router.get('/:productId', productController.getProductById);
 

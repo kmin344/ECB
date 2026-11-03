@@ -68,10 +68,8 @@ export const postReview = (productId, reviewData) => {
   return api.post(`${API_URL}/reviews`, reviewData);
 };
 
-// Cart
-export const fetchCart = () => api.get('/cart');
-export const addToCart = (productId) => api.post('/cart', { productId });
-export const removeFromCart = (productId) => api.delete(`/cart/${productId}`);
+// The storefront keeps the cart in Redux (store/cartSlice.js), so it
+// doesn't call cart-service. Its API is /carts and /carts/items.
 
 // Profile
 export const fetchProfile = () => api.get('/users/profile');

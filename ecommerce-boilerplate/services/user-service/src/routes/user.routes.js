@@ -7,6 +7,10 @@ const router = express.Router();
 
 router.use(authMiddleware, loadCurrentUser);
 
+// The signed-in user's own profile (declared before /:userId).
+router.get('/profile', userController.getProfile);
+router.put('/profile', userController.updateProfile);
+
 // Managing other accounts is admin-only.
 router.post('/', requireAdmin, userController.createUser);
 router.get('/', requireAdmin, userController.getAllUsers);

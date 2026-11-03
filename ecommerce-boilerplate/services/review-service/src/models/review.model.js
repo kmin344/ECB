@@ -22,6 +22,12 @@ const reviewSchema = new mongoose.Schema({
     required: true,
     maxlength: 500
   },
+  // Moderation status set by admins. Reviews are visible unless rejected.
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'approved'
+  },
   createdAt: {
     type: Date,
     default: Date.now
