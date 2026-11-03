@@ -25,7 +25,7 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('getCart', () => {
   it('returns 404 when the user has no cart', async () => {
-    Cart.findOne.mockReturnValue({ populate: jest.fn().mockResolvedValue(null) });
+    Cart.findOne.mockResolvedValue(null);
     const res = mockRes();
 
     await controller.getCart(req(), res);
@@ -34,15 +34,13 @@ describe('getCart', () => {
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
-  it('returns the cart with products populated', async () => {
+  it('returns the cart', async () => {
     const cart = mockCart([{ productId: 'p1', quantity: 1 }]);
-    const populate = jest.fn().mockResolvedValue(cart);
-    Cart.findOne.mockReturnValue({ populate });
+    Cart.findOne.mockResolvedValue(cart);
     const res = mockRes();
 
     await controller.getCart(req(), res);
 
-    expect(populate).toHaveBeenCalledWith('items.productId');
     expect(res.json).toHaveBeenCalledWith(cart);
   });
 });

@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/kmin344/ECB/actions/workflows/ci.yml/badge.svg)](https://github.com/kmin344/ECB/actions/workflows/ci.yml)
 
-A Dockerized e-commerce starter: seven Node.js services behind an API gateway, a React storefront, a React admin dashboard, and a CLI that scaffolds new services into the stack. One `docker compose up` brings the whole thing up locally.
+A Dockerized e-commerce starter: seven Node.js services behind an API gateway, a React storefront, a React admin dashboard, and a CLI that scaffolds new services into the stack. The whole stack runs locally with Docker Compose.
 
 ## Background
 
-At work I built e-commerce sites for clients in fashion, art, high-end furniture, and food & beverage. Each project started by rebuilding the same pieces: auth, catalog, cart, orders, payments, an admin panel. This repository is my open-source take on that recurring foundation, structured so a new project starts from working services instead of an empty folder, and so new domains can be added with one CLI command.
+At work I built e-commerce sites for clients in fashion, art, high-end furniture, and food & beverage. Each project started by rebuilding the same pieces: auth, catalog, cart, orders, payments, an admin panel. This repository is my open-source take on that recurring foundation, structured so a new project starts from working services instead of an empty folder, and so a new domain can be added with one CLI command.
 
 ## Architecture
 
@@ -35,7 +35,7 @@ graph LR
 | Service generator CLI | Node.js, Commander, Inquirer | `ecommerce-boilerplate/cli-tool` |
 | Reverse proxy | Nginx | `ecommerce-boilerplate/nginx` |
 
-Each service owns its own MongoDB database and validates JWTs independently, so services can be deployed and scaled separately. The gateway is the only public entry point for the API.
+Services share one MongoDB instance but use separate databases (user-service reads the users that auth-service writes). auth-service issues JWTs, and every other service verifies them itself, so services can be deployed and scaled separately. Only the gateway, the frontends and nginx publish ports; MongoDB and Redis are reachable only inside the Compose network.
 
 ## Run it locally
 
@@ -56,16 +56,16 @@ docker compose up -d --build
 
 ```bash
 cd ecommerce-boilerplate/cli-tool
-npm install && npm link
+npm install && npm link   # installs the `ecb` command
 cd ..
-add-module
+ecb add-module
 ```
 
-The CLI asks for a module name and port, generates an Express service with routes, a controller, a model and a Dockerfile, and registers it in `docker-compose.yml`.
+The CLI asks for a module name, generates an Express service (routes, controller, model, JWT middleware, Dockerfile, a starter test), and registers it in both `docker-compose.yml` and the API gateway. A module named `Wishlist` is served at `/api/wishlists`.
 
 ## Tests
 
-- **Unit tests** (run in CI on every push): cart-service controller logic, with the database mocked.
+- **Service tests** (run in CI on pull requests and pushes to `main`): cart-service, covering the controller logic and the real routes and JWT middleware with a signed token. Only the Mongoose model is mocked.
 
   ```bash
   cd ecommerce-boilerplate/services/cart-service
@@ -84,9 +84,11 @@ The CLI asks for a module name and port, generates an Express service with route
 ## Repository notes
 
 - `ecommerce-boilerplate/admin-dashboard-angular` is an Angular port of the admin dashboard. It is not wired into `docker-compose.yml`; the React dashboard is the one that runs.
+- Only cart-service has automated tests so far. The other services are covered by the smoke test only.
+- To load demo products into a running stack: `cd ecommerce-boilerplate && npm run seed`.
 - `docker-compose.yml` also starts a Redis container and passes `REDIS_URL` to cart-service, but carts are currently stored in MongoDB; Redis is reserved for a planned cart cache.
 - `scripts/scaffold/` holds the shell scripts that generated the initial project skeleton. They are kept for reference only — running them overwrites `ecommerce-boilerplate/`.
 
 ## License
 
-[MIT](LICENSE)
+[GPL-3.0](LICENSE)

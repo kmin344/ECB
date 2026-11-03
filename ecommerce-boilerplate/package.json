@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "test:smoke": "node tests/integration.test.js && node tests/products.test.js"
+    "test:smoke": "node tests/smoke.js",
+    "seed": "node scripts/seed-products.js"
   },
   "dependencies": {
     "axios": "^1.7.7"

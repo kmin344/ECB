@@ -45,6 +45,7 @@ services:
       - ./services/review-service:/usr/src/app
       - /usr/src/app/node_modules
     environment:
+      - MONGODB_URI=mongodb://mongo:27017/review-service
       - JWT_SECRET=your_jwt_secret
     depends_on:
       - mongo
@@ -68,8 +69,6 @@ services:
 
   mongo:
     image: mongo:latest
-    ports:
-      - 27017:27017
     volumes:
       - ./mongo-data:/data/db
   nginx:
@@ -87,6 +86,7 @@ services:
       - ./services/user-service:/usr/src/app
       - /usr/src/app/node_modules
     environment:
+      - MONGODB_URI=mongodb://mongo:27017/auth-service
       - JWT_SECRET=your_jwt_secret
     depends_on:
       - mongo
@@ -96,6 +96,7 @@ services:
       - ./services/cart-service:/usr/src/app
       - /usr/src/app/node_modules
     environment:
+      - MONGODB_URI=mongodb://mongo:27017/cart-service
       - JWT_SECRET=your_jwt_secret
       - REDIS_URL=redis://redis:6379
     depends_on:
@@ -111,6 +112,7 @@ services:
       - ./services/payment-service:/usr/src/app
       - /usr/src/app/node_modules
     environment:
+      - MONGODB_URI=mongodb://mongo:27017/payment-service
       - JWT_SECRET=your_jwt_secret
     depends_on:
       - mongo

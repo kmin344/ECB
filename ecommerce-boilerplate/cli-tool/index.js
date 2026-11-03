@@ -24,7 +24,7 @@ program
       {
         type: 'input',
         name: 'port',
-        message: 'Which port should this module run on?',
+        message: 'Host port to publish the service on (3000 = not published)?',
         default: '3000',
         validate: input => !isNaN(input) || 'Port must be a number'
       }
@@ -45,7 +45,6 @@ program
       'src/middleware',
       'src/utils',
       'src/config',
-      'tests/unit',
       'tests/integration'
     ];
 
@@ -71,7 +70,6 @@ program
     await fs.writeFile(path.join(serviceDir, 'src/config', 'database.js'), createDatabaseConfig());
 
     // Create test files
-    await fs.writeFile(path.join(serviceDir, 'tests/unit', `${moduleNameLower}.test.js`), createUnitTest(moduleNameLower));
     await fs.writeFile(path.join(serviceDir, 'tests/integration', `${moduleNameLower}.test.js`), createIntegrationTest(moduleNameLower));
 
     // Update docker-compose.yml
@@ -79,9 +77,8 @@ program
 
     // Update API Gateway
     const apiGatewayPath = path.join(__dirname, '..', 'api-gateway', 'src', 'routes', 'route.js');
-    let apiGatewayContent = await fs.readFile(apiGatewayPath, 'utf8');
-    apiGatewayContent += createApiGatewayRoute(moduleNameLower);
-    await fs.writeFile(apiGatewayPath, apiGatewayContent);
+    const apiGatewayContent = await fs.readFile(apiGatewayPath, 'utf8');
+    await fs.writeFile(apiGatewayPath, addApiGatewayRoute(apiGatewayContent, moduleNameLower));
 
     console.log(`Module ${moduleName} has been successfully added!`);
   });
@@ -124,8 +121,9 @@ function createPackageJson(moduleName) {
 }
 
 function createEnvFile(moduleName, port) {
-  return `PORT=${port}
-MONGODB_URI=mongodb://mongo:27017/${moduleName}_db
+  return `# The container always listens on 3000; the gateway proxies to it.
+PORT=3000
+MONGODB_URI=mongodb://mongo:27017/${moduleName}-service
 JWT_SECRET=your_jwt_secret`;
 }
 
@@ -144,7 +142,7 @@ const app = express();
 
 app.use(express.json());
 
-app.use('/api/${moduleName}s', ${moduleName}Routes);
+app.use('/', ${moduleName}Routes);
 
 app.use(errorMiddleware);
 
@@ -257,7 +255,7 @@ module.exports = (req, res, next) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-    req.userData = { userId: decodedToken.userId };
+    req.user = { id: decodedToken.userId };
     next();
   } catch (error) {
     return res.status(401).json({ message: 'Authentication failed' });
@@ -328,26 +326,22 @@ const connectDB = async () => {
 module.exports = connectDB;`;
 }
 
-function createUnitTest(moduleName) {
-  const moduleNameCapitalized = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
-  return `const ${moduleNameCapitalized} = require('../../src/models/${moduleName}.model');
-
-describe('${moduleNameCapitalized} Model Test', () => {
-  // Describe your unit tests here
-});`;
-}
-
 function createIntegrationTest(moduleName) {
-  return `const request = require('supertest');
+  return `process.env.JWT_SECRET = 'test-secret';
+
+const request = require('supertest');
 const app = require('../../src/app');
 
 describe('${moduleName} API', () => {
-  it('should create a new ${moduleName}', async () => {
-    // Write your integration test here
+  it('rejects writes without a token', async () => {
+    const res = await request(app).post('/').send({});
+    expect(res.status).toBe(401);
   });
 
-  // Add more integration tests for other endpoints
-});`;
+  // Add tests for your endpoints here. Mock the Mongoose model with
+  // jest.mock('../../src/models/${moduleName}.model') to run without a database.
+});
+`;
 }
 
 async function updateDockerCompose(moduleName, port) {
@@ -365,6 +359,7 @@ async function updateDockerCompose(moduleName, port) {
       '/usr/src/app/node_modules'
     ],
     environment: [
+      `MONGODB_URI=mongodb://mongo:27017/${moduleName}-service`,
       'JWT_SECRET=your_jwt_secret'
     ],
     depends_on: [
@@ -398,16 +393,12 @@ async function updateDockerCompose(moduleName, port) {
   await fs.writeFile(dockerComposePath, formattedYaml, 'utf8');
 }
 
-function createApiGatewayRoute(moduleName) {
-  return `
-
-const ${moduleName}ServiceProxy = createProxyMiddleware({
-  target: 'http://${moduleName}-service:3000',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/${moduleName}s': '/api/${moduleName}s',
-  },
-});
-
-router.use('/api/${moduleName}s', ${moduleName}ServiceProxy);`;
+function addApiGatewayRoute(content, moduleName) {
+  const marker = '\n];\n\nfor (const [path, target] of routes)';
+  if (!content.includes(marker)) {
+    throw new Error('Could not find the routes table in api-gateway/src/routes/route.js');
+  }
+  const envName = `${moduleName.toUpperCase()}_SERVICE_URL`;
+  const entry = `\n  ['/api/${moduleName}s', process.env.${envName} || 'http://${moduleName}-service:3000'],`;
+  return content.replace(marker, entry + marker);
 }

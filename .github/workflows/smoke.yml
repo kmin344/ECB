@@ -13,12 +13,14 @@ jobs:
       run:
         working-directory: ecommerce-boilerplate
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
       - name: Start the stack
-        run: docker compose up -d --build
+        # The gateway depends on every backend service, so this starts the
+        # whole API stack without the storefront, admin dashboard or nginx.
+        run: docker compose up -d --build api-gateway
       - name: Wait for the API gateway
         run: |
           for i in $(seq 1 60); do
