@@ -1,130 +1,101 @@
+// End-to-end smoke test through the API gateway.
+// Start the stack first (docker compose up -d --build api-gateway), then:
+//   npm run test:smoke
 const axios = require('axios');
 
-const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:4000';
+const API = process.env.API_GATEWAY_URL || 'http://localhost:4000';
+const client = axios.create({ baseURL: API, validateStatus: () => true });
 
-const random = Math.floor(Math.random() * 1000);
-
-async function testAuthService() {
-  console.log('Testing Auth Service...');
-  
-  try {
-    // Test user registration
-    
-    const registerResponse = await axios.post(`${API_GATEWAY_URL}/api/auth/register`, {
-      username: 'newuser' + random,
-      email: 'newuser@example.com' + random,
-      password: 'newpassword123' + random
-    });
-    console.log('Register Response:', registerResponse.data);
-
-    // Test user login
-    const loginResponse = await axios.post(`${API_GATEWAY_URL}/api/auth/login`, {
-      email: 'newuser@example.com' + random,
-      password: 'newpassword123' + random
-    });
-
-    console.log('Auth Service tests passed successfully!');
-    return loginResponse.data.token;
-  } catch (error) {
-    console.error('Auth Service Test Error:', error.response ? error.response.data : error.message);
-    throw error;
+let failures = 0;
+function check(label, response, expectedStatus, predicate = () => true) {
+  const ok = response.status === expectedStatus && predicate(response.data);
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${label} (HTTP ${response.status})`);
+  if (!ok) {
+    failures += 1;
+    console.log('      response:', JSON.stringify(response.data).slice(0, 300));
   }
+  return ok;
 }
 
-async function testProductService(token) {
-  console.log('Testing Product Service...');
-  
-  try {
-    const headers = { Authorization: `Bearer ${token}` };
+async function main() {
+  const id = Date.now();
+  const credentials = { email: `smoke-${id}@example.com`, password: `smoke-${id}-pw` };
 
-    // Test creating a product
-    const createProductResponse = await axios.post(`${API_GATEWAY_URL}/api/products`, {
-      name: 'Test Product',
-      description: 'This is a test product',
+  // Auth
+  const register = await client.post('/api/auth/register', { username: `smoke-${id}`, ...credentials });
+  check('register a user', register, 201, (d) => typeof d.token === 'string');
+
+  const login = await client.post('/api/auth/login', credentials);
+  if (!check('log in', login, 200, (d) => d.token && d.user && d.user._id)) return;
+  const userId = login.data.user._id;
+  const headers = { Authorization: `Bearer ${login.data.token}` };
+
+  // Products
+  const create = await client.post(
+    '/api/products',
+    {
+      name: 'Smoke Test Product',
+      description: 'Created by the smoke test',
+      thumbnail: 'https://example.com/product.jpg',
       price: 9.99,
       stock: 10,
-      category: 'Test Category'
-    }, { headers });
-    console.log('Create Product Response:', createProductResponse.data);
-    
-    const productId = createProductResponse.data._id;
+      category: 'Smoke Tests',
+    },
+    { headers },
+  );
+  if (!check('create a product', create, 201, (d) => d._id && d.stock === 10)) return;
+  const productId = create.data._id;
 
-    // Test getting all products
-    const getAllProductsResponse = await axios.get(`${API_GATEWAY_URL}/api/products`, { headers });
-    console.log('Get All Products Response:', getAllProductsResponse.data);
+  const list = await client.get('/api/products', { headers });
+  check('list products', list, 200, (d) => Array.isArray(d) && d.some((p) => p._id === productId));
 
-    // Test getting a single product
-    const getProductResponse = await axios.get(`${API_GATEWAY_URL}/api/products/${productId}`, { headers });
-    console.log('Get Single Product Response:', getProductResponse.data);
+  const update = await client.put(`/api/products/${productId}`, { stock: 15 }, { headers });
+  check('update only the stock', update, 200, (d) => d.stock === 15 && d.name === 'Smoke Test Product');
 
-    // Test updating a product
-    const updateProductResponse = await axios.put(`${API_GATEWAY_URL}/api/products/${productId}`, {
-      stock: 15
-    }, { headers });
-    console.log('Update Product Response:', updateProductResponse.data);
+  const availability = await client.post(
+    '/api/products/check-availability',
+    { products: [{ productId, quantity: 5 }] },
+    { headers },
+  );
+  check('check availability', availability, 200, (d) => d[0] && d[0].available === true);
 
-    // Test checking product availability
-    const checkAvailabilityResponse = await axios.post(`${API_GATEWAY_URL}/api/products/check-availability`, {
-      products: [{ productId, quantity: 5 }]
-    }, { headers });
-    console.log('Check Availability Response:', checkAvailabilityResponse.data);
+  // Orders
+  const order = await client.post(
+    '/api/orders',
+    {
+      products: [{ product: productId, quantity: 2 }],
+      totalAmount: 19.98,
+      shippingAddress: '123 Test Street, Test City',
+    },
+    { headers },
+  );
+  if (!check('create an order', order, 201, (d) => d._id && d.user === userId)) return;
 
-    console.log('Product Service tests passed successfully!');
-    return productId;
-  } catch (error) {
-    console.error('Product Service Test Error:', error.response ? error.response.data : error.message);
-    throw error;
-  }
+  const orders = await client.get(`/api/orders/user/${userId}`, { headers });
+  check("list the user's orders", orders, 200, (d) => Array.isArray(d) && d.some((o) => o._id === order.data._id));
+
+  const single = await client.get(`/api/orders/${order.data._id}`, { headers });
+  check('get the order', single, 200, (d) => d._id === order.data._id);
+
+  // Cart
+  const cart = await client.post('/api/carts/items', { productId, quantity: 1 }, { headers });
+  check('add to cart', cart, 201, (d) => d.items && d.items.length === 1);
+
+  // Auth is enforced through the gateway
+  const anonymous = await client.get(`/api/orders/user/${userId}`);
+  check('reject requests without a token', anonymous, 401);
 }
 
-async function testOrderService(token, productId) {
-  console.log('Testing Order Service...');
-
-  try {
-    const headers = { Authorization: `Bearer ${token}` };
-
-    // Test creating an order
-    const createOrderPayload = {
-      userId: "newuser" + random,  // This should be a valid user ID from your Auth Service
-      products: [{ productId, quantity: 2 }],
-      totalAmount: 19.98,  // This should be calculated based on the product price and quantity
-      shippingAddress: "123 Test Street, Test City, Test Country 12345"
-    };
-
-    const createOrderResponse = await axios.post(
-      `${API_GATEWAY_URL}/api/orders`,
-      createOrderPayload,
-      { headers }
-    );
-    console.log('Create Order Response:', createOrderResponse.data);
-
-    const orderId = createOrderResponse.data._id;
-
-    // Test getting all orders
-    const getAllOrdersResponse = await axios.get(`${API_GATEWAY_URL}/api/orders`, { headers });
-    console.log('Get All Orders Response:', getAllOrdersResponse.data);
-
-    // Test getting a single order
-    const getOrderResponse = await axios.get(`${API_GATEWAY_URL}/api/orders/${orderId}`, { headers });
-    console.log('Get Single Order Response:', getOrderResponse.data);
-
-    console.log('Order Service tests passed successfully!');
-  } catch (error) {
-    console.error('Order Service Test Error:', error.response ? error.response.data : error.message);
-    console.error('Full error object:', error);
-    throw error;
-  }
-}
-
-async function runTests() {
-  try {
-    const token = await testAuthService();
-    const productId = await testProductService(token);
-    await testOrderService(token, productId);
-  } catch (error) {
-    console.error('Test run failed:', error);
-    process.exitCode = 1;
-  }
-}
-
-runTests();
+main()
+  .catch((error) => {
+    console.error('Smoke test crashed:', error.message);
+    failures += 1;
+  })
+  .finally(() => {
+    if (failures > 0) {
+      console.error(`\n${failures} check(s) failed`);
+      process.exitCode = 1;
+    } else {
+      console.log('\nAll smoke checks passed');
+    }
+  });

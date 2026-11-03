@@ -19,22 +19,46 @@ program
         type: 'input',
         name: 'moduleName',
         message: 'What is the name of the new module?',
-        validate: input => input.trim() !== '' || 'Module name cannot be empty'
+        validate: input => {
+          if (!/^[A-Za-z][A-Za-z0-9]*$/.test(input.trim())) {
+            return 'Use letters and digits only, starting with a letter (e.g. Wishlist)';
+          }
+          const dir = path.join(__dirname, '..', 'services', `${input.trim().toLowerCase()}-service`);
+          return !fs.existsSync(dir) || `services/${input.trim().toLowerCase()}-service already exists`;
+        }
       },
       {
         type: 'input',
         name: 'port',
         message: 'Host port to publish the service on (3000 = not published)?',
         default: '3000',
-        validate: input => !isNaN(input) || 'Port must be a number'
+        validate: input => (Number.isInteger(Number(input)) && Number(input) > 0 && Number(input) < 65536) || 'Port must be a number between 1 and 65535'
       }
     ]);
 
-    const { moduleName, port } = answers;
+    const moduleName = answers.moduleName.trim();
+    const port = String(answers.port).trim();
     const moduleNameLower = moduleName.toLowerCase();
 
-    // Create service directory
+    // Check everything that could fail before writing any file, so a failed
+    // run never leaves the project half-modified.
     const serviceDir = path.join(__dirname, '..', 'services', `${moduleNameLower}-service`);
+    const apiGatewayPath = path.join(__dirname, '..', 'api-gateway', 'src', 'routes', 'route.js');
+    const dockerComposePath = path.join(__dirname, '..', 'docker-compose.yml');
+    if (await fs.pathExists(serviceDir)) {
+      throw new Error(`services/${moduleNameLower}-service already exists`);
+    }
+    const compose = yaml.load(await fs.readFile(dockerComposePath, 'utf8'));
+    if (compose.services[`${moduleNameLower}-service`]) {
+      throw new Error(`${moduleNameLower}-service is already defined in docker-compose.yml`);
+    }
+    const gatewayContent = await fs.readFile(apiGatewayPath, 'utf8');
+    if (gatewayContent.includes(`'/api/${moduleNameLower}s'`)) {
+      throw new Error(`The gateway already routes /api/${moduleNameLower}s`);
+    }
+    const updatedGatewayContent = addApiGatewayRoute(gatewayContent, moduleNameLower);
+
+    // Create service directory
     await fs.ensureDir(serviceDir);
 
     // Create directory structure
@@ -76,14 +100,15 @@ program
     await updateDockerCompose(moduleNameLower, port);
 
     // Update API Gateway
-    const apiGatewayPath = path.join(__dirname, '..', 'api-gateway', 'src', 'routes', 'route.js');
-    const apiGatewayContent = await fs.readFile(apiGatewayPath, 'utf8');
-    await fs.writeFile(apiGatewayPath, addApiGatewayRoute(apiGatewayContent, moduleNameLower));
+    await fs.writeFile(apiGatewayPath, updatedGatewayContent);
 
     console.log(`Module ${moduleName} has been successfully added!`);
   });
 
-program.parse(process.argv);
+program.parseAsync(process.argv).catch((error) => {
+  console.error(`Error: ${error.message}`);
+  process.exitCode = 1;
+});
 
 function createDockerfile() {
   return `FROM node:16

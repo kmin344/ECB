@@ -22,6 +22,9 @@ exports.createOrder = async (req, res) => {
     const savedOrder = await newOrder.save();
     res.status(201).json(savedOrder);
   } catch (error) {
+    if (error.name === 'ValidationError' || error.name === 'CastError') {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Error creating order', error: error.message });
   }
 };

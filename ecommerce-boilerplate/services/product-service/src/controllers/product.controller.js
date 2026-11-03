@@ -10,12 +10,16 @@ exports.createProduct = async (req, res) => {
       description: req.body.description,
       price: req.body.price,
       category: req.body.category,
-      inStock: req.body.inStock
+      inStock: req.body.inStock,
+      stock: req.body.stock
     });
 
     const savedProduct = await product.save();
     res.status(201).send(savedProduct);
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).send({ message: error.message });
+    }
     res.status(500).send({
       message: error.message || "Some error occurred while creating the Product."
     });
@@ -59,14 +63,17 @@ exports.getProductById = async (req, res) => {
 // Update a Product identified by the productId in the request
 exports.updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.productId, {
-      name: req.body.name,
-      description: req.body.description,
-      price: req.body.price,
-      category: req.body.category,
-      inStock: req.body.inStock,
-      updatedAt: Date.now()
-    }, { new: true });
+    // Only update the fields the client sent, so a partial update such as
+    // { stock: 15 } does not clear the other fields.
+    const updatable = ['name', 'description', 'price', 'category', 'inStock', 'stock', 'thumbnail', 'images'];
+    const changes = { updatedAt: Date.now() };
+    for (const field of updatable) {
+      if (req.body[field] !== undefined) changes[field] = req.body[field];
+    }
+    const product = await Product.findByIdAndUpdate(req.params.productId, changes, {
+      new: true,
+      runValidators: true
+    });
 
     if (!product) {
       return res.status(404).send({

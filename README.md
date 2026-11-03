@@ -65,14 +65,16 @@ The CLI asks for a module name, generates an Express service (routes, controller
 
 ## Tests
 
-- **Service tests** (run in CI on pull requests and pushes to `main`): cart-service, covering the controller logic and the real routes and JWT middleware with a signed token. Only the Mongoose model is mocked.
+- **Service tests** (run in CI on pull requests and pushes to `main`), going through the real routes and JWT middleware with signed tokens; only the Mongoose models are mocked:
+  - cart-service: cart operations scoped to the user in the token
+  - user-service: role-based access (users manage only their own account; listing, creating, deleting and changing roles is admin-only)
 
   ```bash
-  cd ecommerce-boilerplate/services/cart-service
+  cd ecommerce-boilerplate/services/cart-service   # or user-service
   npm ci && npx jest
   ```
 
-- **Smoke test** (full stack): registers a user, logs in, and exercises products and orders through the gateway. Start the stack first, then:
+- **Smoke test** (full stack): through the gateway, registers and logs in a user, creates, lists and partially updates a product, checks stock, places and reads back an order, adds to the cart, and confirms unauthenticated requests are rejected. Each step asserts the status code and response. Start the stack first, then:
 
   ```bash
   cd ecommerce-boilerplate
@@ -84,7 +86,8 @@ The CLI asks for a module name, generates an Express service (routes, controller
 ## Repository notes
 
 - `ecommerce-boilerplate/admin-dashboard-angular` is an Angular port of the admin dashboard. It is not wired into `docker-compose.yml`; the React dashboard is the one that runs.
-- Only cart-service has automated tests so far. The other services are covered by the smoke test only.
+- auth, product and order are covered by the smoke test; review and payment have no automated tests yet.
+- user-service roles are stored on the user record; promote the first admin directly in MongoDB (`role: "admin"`).
 - To load demo products into a running stack: `cd ecommerce-boilerplate && npm run seed`.
 - `docker-compose.yml` also starts a Redis container and passes `REDIS_URL` to cart-service, but carts are currently stored in MongoDB; Redis is reserved for a planned cart cache.
 - `scripts/scaffold/` holds the shell scripts that generated the initial project skeleton. They are kept for reference only — running them overwrites `ecommerce-boilerplate/`.

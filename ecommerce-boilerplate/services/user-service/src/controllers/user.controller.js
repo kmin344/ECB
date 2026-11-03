@@ -1,5 +1,4 @@
 const User = require('../models/user.model');
-const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const axios = require('axios');
 
@@ -11,12 +10,15 @@ const api = axios.create({
 
 exports.createUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, role });
+    // The model hashes the password in its pre-save hook.
+    const { username, email, password, role } = req.body;
+    const user = new User({ username, email, password, role });
     await user.save();
     res.status(201).send({ message: 'User created successfully', userId: user._id });
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).send({ message: error.message });
+    }
     res.status(500).send({ message: 'Error creating user', error: error.message });
   }
 };
@@ -44,8 +46,17 @@ exports.getUserById = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const { name, email, role } = req.body;
-    const user = await User.findByIdAndUpdate(req.params.userId, { name, email, role }, { new: true, runValidators: true });
+    const { username, email, role } = req.body;
+    const changes = {};
+    if (username !== undefined) changes.username = username;
+    if (email !== undefined) changes.email = email;
+    if (role !== undefined) {
+      if (req.user.role !== 'admin') {
+        return res.status(403).send({ message: 'Only admins can change roles' });
+      }
+      changes.role = role;
+    }
+    const user = await User.findByIdAndUpdate(req.params.userId, changes, { new: true, runValidators: true }).select('-password');
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
@@ -77,9 +88,7 @@ exports.getUserProfileWithOrders = async (req, res) => {
     }
     
     // Fetch user profile
-    console.log('Fetching user profile', userId);
     const user = await User.findById(userId, '-password');
-    console.log('User:', user);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
