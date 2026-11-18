@@ -1,49 +1,34 @@
-// src/models/payment.model.js
 const mongoose = require('mongoose');
 
-const PaymentSchema = new mongoose.Schema({
-  orderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Order',
-    required: true
+// One Stripe Checkout session for one order. An order can have several
+// (for example, the shopper left the first one and it expired).
+const PaymentSchema = new mongoose.Schema(
+  {
+    orderId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    provider: { type: String, required: true, default: 'stripe' },
+    sessionId: { type: String, required: true, unique: true },
+    paymentIntentId: String,
+    // In the store's units (19.99), like order totals.
+    amount: { type: Number, required: true, min: 0 },
+    currency: { type: String, required: true },
+    status: {
+      type: String,
+      required: true,
+      enum: ['pending', 'succeeded', 'failed', 'expired', 'refunded'],
+      default: 'pending',
+    },
+    url: String,
+    expiresAt: Date,
   },
-  amount: {
-    type: Number,
-    required: true
-  },
-  currency: {
-    type: String,
-    required: true,
-    default: 'USD'
-  },
-  method: {
-    type: String,
-    required: true,
-    enum: ['credit_card', 'paypal', 'bank_transfer']
-  },
-  status: {
-    type: String,
-    required: true,
-    enum: ['pending', 'completed', 'failed'],
-    default: 'pending'
-  },
-  transactionId: {
-    type: String,
-    unique: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+  { timestamps: true },
+);
 
-PaymentSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
+// At most one successful payment per order. A second success is refunded.
+// Named, because the plain orderId index above already uses the default name "orderId_1".
+PaymentSchema.index(
+  { orderId: 1 },
+  { name: 'one_success_per_order', unique: true, partialFilterExpression: { status: 'succeeded' } },
+);
 
 module.exports = mongoose.model('Payment', PaymentSchema);

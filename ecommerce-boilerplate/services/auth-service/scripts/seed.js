@@ -1,4 +1,10 @@
 const mongoose = require('mongoose');
+
+// This script deletes the collection before it inserts demo data. Never run it on a live store.
+if (process.env.NODE_ENV === 'production') {
+  console.error('Refusing to seed: NODE_ENV is production');
+  process.exit(1);
+}
 const { users } = require('../data/seed-data');
 const User = require('../src/models/user.model');
 

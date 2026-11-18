@@ -1,12 +1,18 @@
-FROM node:16
+FROM node:22-alpine
 
-WORKDIR /usr/src/app
+ENV NODE_ENV=production
+WORKDIR /app
 
-COPY package*.json ./
+# Install production dependencies from the lockfile first, so this layer is
+# cached until package*.json changes.
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
-RUN npm install
+COPY src ./src
+COPY scripts ./scripts
+COPY data ./data
 
-COPY . .
-
+# Run as the unprivileged user that the node image provides.
+USER node
 EXPOSE 3000
 CMD ["node", "src/app.js"]

@@ -1,18 +1,15 @@
 const logger = require('../utils/logger');
 
+// Logs every error. Clients get the message only for their own mistakes (4xx);
+// server errors get a generic message so driver and stack details stay in the logs.
 const errorMiddleware = (err, req, res, next) => {
-  // Log the error
-  logger.error(err.stack);
-
-  // Determine the status code
   const statusCode = err.statusCode || 500;
+  logger.error(err.stack || String(err));
 
-  // Send the error response
   res.status(statusCode).json({
     status: 'error',
-    statusCode: statusCode,
-    message: err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    statusCode,
+    message: statusCode < 500 ? err.message : 'Internal Server Error',
   });
 };
 

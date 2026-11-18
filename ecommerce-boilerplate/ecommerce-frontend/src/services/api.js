@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost/api';
+// Same origin as the page by default: nginx serves the app and routes /api to the gateway.
+const API_URL = process.env.REACT_APP_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -54,24 +55,22 @@ export const getProduct = (id) => api.get(`/products/${id}`);
 
 // Related products
 export const getRelatedProducts = (productId, category) => {
-  return api.get(`${API_URL}/products/related`, {
+  return api.get(`/products/related`, {
     params: { productId, category }
   });
 };
 
 // Reviews
 export const getReviews = (productId) => {
-  return api.get(`${API_URL}/reviews/product/${productId}`);
+  return api.get(`/reviews/product/${productId}`);
 };
 
 export const postReview = (productId, reviewData) => {
-  return api.post(`${API_URL}/reviews`, reviewData);
+  return api.post(`/reviews`, reviewData);
 };
 
-// Cart
-export const fetchCart = () => api.get('/cart');
-export const addToCart = (productId) => api.post('/cart', { productId });
-export const removeFromCart = (productId) => api.delete(`/cart/${productId}`);
+// The storefront keeps the cart in Redux (store/cartSlice.js), so it
+// doesn't call cart-service. Its API is /carts and /carts/items.
 
 // Profile
 export const fetchProfile = () => api.get('/users/profile');

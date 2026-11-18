@@ -64,7 +64,7 @@ const Orders = () => {
           <TableHead>
             <TableRow>
               <TableCell>Order ID</TableCell>
-              <TableCell>Customer</TableCell>
+              <TableCell>Customer ID</TableCell>
               <TableCell>Total</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Date</TableCell>
@@ -75,7 +75,7 @@ const Orders = () => {
             {orders.map((order) => (
               <TableRow key={order._id}>
                 <TableCell>{order._id}</TableCell>
-                <TableCell>{order.user ? order.user.name : 'N/A'}</TableCell>
+                <TableCell>{order.user || 'N/A'}</TableCell>
                 <TableCell>{formatPrice(order.totalAmount)}</TableCell>
                 <TableCell>{order.status}</TableCell>
                 <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
@@ -95,8 +95,7 @@ const Orders = () => {
           {currentOrder && (
             <>
               <Typography variant="h6">Order ID: {currentOrder._id}</Typography>
-              <Typography>Customer: {currentOrder.user ? currentOrder.user.name : 'N/A'}</Typography>
-              <Typography>Email: {currentOrder.user ? currentOrder.user.email : 'N/A'}</Typography>
+              <Typography>Customer ID: {currentOrder.user || 'N/A'}</Typography>
               <Typography>Total: {formatPrice(currentOrder.totalAmount)}</Typography>
               <Typography>Status: {currentOrder.status}</Typography>
               <Typography>Date: {new Date(currentOrder.createdAt).toLocaleString()}</Typography>
@@ -105,17 +104,15 @@ const Orders = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Product</TableCell>
+                      <TableCell>Product ID</TableCell>
                       <TableCell>Quantity</TableCell>
-                      <TableCell>Price</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {currentOrder.products.map((item, index) => (
                       <TableRow key={index}>
-                        <TableCell>{item.product ? item.product.name : 'N/A'}</TableCell>
+                        <TableCell>{item.product || 'N/A'}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
-                        <TableCell>{formatPrice(item.product ? item.product.price : null)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

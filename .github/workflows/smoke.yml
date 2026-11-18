@@ -1,0 +1,46 @@
+name: Smoke test (full stack)
+
+# Builds every image, starts the whole stack with docker compose (nginx in
+# front, as in production) and runs the end-to-end smoke test through nginx.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecommerce-boilerplate
+    env:
+      # A throwaway secret for this CI run only.
+      JWT_SECRET: ci-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+      ADMIN_EMAIL: smoke-admin@example.com
+      ADMIN_PASSWORD: smoke-admin-password
+      API_GATEWAY_URL: http://localhost
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Build and start the stack
+        # --wait returns when every health check passes (or fails the step).
+        run: docker compose up -d --build --wait --wait-timeout 300
+      - name: Create the admin account
+        run: |
+          curl -sf "$API_GATEWAY_URL/api/auth/register" -H 'content-type: application/json' \
+            -d "{\"username\":\"smoke-admin\",\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
+          docker compose exec -T auth-service node scripts/promote-admin.js "$ADMIN_EMAIL"
+      - name: Storefront and admin dashboard are served
+        run: |
+          curl -sf http://localhost/ | grep -q '<div id="root">'
+          curl -sf http://localhost/admin/ | grep -q '<div id="root">'
+      - run: npm ci
+      - run: npm run test:smoke
+      - name: Service logs
+        if: always()
+        run: docker compose logs --no-color --tail=200
+      - if: always()
+        run: docker compose down -v

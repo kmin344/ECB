@@ -1,119 +1,133 @@
+# Full stack: nginx (port 80) -> storefront, admin dashboard and API gateway -> services -> MongoDB.
+# Settings come from .env (copy .env.example). JWT_SECRET is required.
+
+x-service: &service
+  restart: unless-stopped
+  depends_on:
+    mongo:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/ready').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+    interval: 10s
+    timeout: 3s
+    retries: 6
+    start_period: 10s
+
+x-jwt: &jwt
+  JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
 
 services:
+  mongo:
+    image: mongo:8.0
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  auth-service:
+    <<: *service
+    build: ./services/auth-service
+    environment:
+      <<: *jwt
+      MONGODB_URI: mongodb://mongo:27017/auth-service
+
+  user-service:
+    <<: *service
+    build: ./services/user-service
+    environment:
+      <<: *jwt
+      # Reads the users that auth-service writes.
+      MONGODB_URI: mongodb://mongo:27017/auth-service
+      ORDER_SERVICE_URL: http://order-service:3000
+
+  product-service:
+    <<: *service
+    build: ./services/product-service
+    environment:
+      <<: *jwt
+      MONGODB_URI: mongodb://mongo:27017/product-service
+
+  order-service:
+    <<: *service
+    build: ./services/order-service
+    environment:
+      <<: *jwt
+      MONGODB_URI: mongodb://mongo:27017/order-service
+      PRODUCT_SERVICE_URL: http://product-service:3000
+
+  cart-service:
+    <<: *service
+    build: ./services/cart-service
+    environment:
+      <<: *jwt
+      MONGODB_URI: mongodb://mongo:27017/cart-service
+
+  review-service:
+    <<: *service
+    build: ./services/review-service
+    environment:
+      <<: *jwt
+      MONGODB_URI: mongodb://mongo:27017/review-service
+
+  payment-service:
+    <<: *service
+    build: ./services/payment-service
+    environment:
+      <<: *jwt
+      MONGODB_URI: mongodb://mongo:27017/payment-service
+      ORDER_SERVICE_URL: http://order-service:3000
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STORE_URL: ${STORE_URL:-http://localhost}
+      STORE_CURRENCY: ${STORE_CURRENCY:-usd}
+
   api-gateway:
     build: ./api-gateway
+    restart: unless-stopped
+    environment:
+      # One proxy (nginx) in front: the client IP is the last X-Forwarded-For entry.
+      TRUST_PROXY: 1
+    # Published on this machine only (for the smoke test and curl). The public entry is nginx.
     ports:
-      - 4000:4000
+      - 127.0.0.1:4000:4000
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
     depends_on:
-      - product-service
-      - order-service
-      - auth-service
-      - review-service
-      - user-service
-      - cart-service
-      - payment-service
-  product-service:
-    build: ./services/product-service
-    volumes:
-      - ./services/product-service:/usr/src/app
-      - /usr/src/app/node_modules
-    environment:
-      - JWT_SECRET=your_jwt_secret
-    depends_on:
-      - mongo
-  order-service:
-    build: ./services/order-service
-    volumes:
-      - ./services/order-service:/usr/src/app
-      - /usr/src/app/node_modules
-    environment:
-      - JWT_SECRET=your_jwt_secret
-    depends_on:
-      - mongo
-  auth-service:
-    build: ./services/auth-service
-    volumes:
-      - ./services/auth-service:/usr/src/app
-      - /usr/src/app/node_modules
-    environment:
-      - JWT_SECRET=your_jwt_secret
-    depends_on:
-      - mongo
-  review-service:
-    build: ./services/review-service
-    volumes:
-      - ./services/review-service:/usr/src/app
-      - /usr/src/app/node_modules
-    environment:
-      - JWT_SECRET=your_jwt_secret
-    depends_on:
-      - mongo
-  admin-dashboard:
-    build: ./admin-dashboard
-    ports:
-      - 3000:80
-    environment:
-      - REACT_APP_API_URL=http://api-gateway:4000/api
-    depends_on:
-      - api-gateway
+      auth-service: { condition: service_healthy }
+      user-service: { condition: service_healthy }
+      product-service: { condition: service_healthy }
+      order-service: { condition: service_healthy }
+      cart-service: { condition: service_healthy }
+      review-service: { condition: service_healthy }
+      payment-service: { condition: service_healthy }
 
   ecommerce-frontend:
     build: ./ecommerce-frontend
-    ports:
-      - 3001:80
-    environment:
-      - REACT_APP_API_URL=http://api-gateway:4000/api
-    depends_on:
-      - api-gateway
+    restart: unless-stopped
 
-  mongo:
-    image: mongo:latest
-    ports:
-      - 27017:27017
-    volumes:
-      - ./mongo-data:/data/db
+  admin-dashboard:
+    build: ./admin-dashboard
+    restart: unless-stopped
+
   nginx:
-    image: nginx:latest
+    image: nginx:1.28-alpine
+    restart: unless-stopped
     ports:
       - 80:80
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - api-gateway
-      - admin-dashboard
-  user-service:
-    build: ./services/user-service
-    volumes:
-      - ./services/user-service:/usr/src/app
-      - /usr/src/app/node_modules
-    environment:
-      - JWT_SECRET=your_jwt_secret
-    depends_on:
-      - mongo
-  cart-service:
-    build: ./services/cart-service
-    volumes:
-      - ./services/cart-service:/usr/src/app
-      - /usr/src/app/node_modules
-    environment:
-      - JWT_SECRET=your_jwt_secret
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      - mongo
-      - redis
-  redis:
-    image: redis:latest
-    volumes:
-      - ./redis_data:/data
-  payment-service:
-    build: ./services/payment-service
-    volumes:
-      - ./services/payment-service:/usr/src/app
-      - /usr/src/app/node_modules
-    environment:
-      - JWT_SECRET=your_jwt_secret
-    depends_on:
-      - mongo
+      api-gateway: { condition: service_healthy }
+      ecommerce-frontend: { condition: service_started }
+      admin-dashboard: { condition: service_started }
 
 volumes:
-  mongo-data: null
+  mongo-data:

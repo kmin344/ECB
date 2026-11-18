@@ -1,7 +1,8 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost/api';
+// Same origin as the page by default: nginx serves the app and routes /api to the gateway.
+const API_URL = process.env.REACT_APP_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_URL,

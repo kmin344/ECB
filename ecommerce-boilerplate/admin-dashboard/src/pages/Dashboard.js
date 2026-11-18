@@ -38,7 +38,7 @@ const Dashboard = () => {
       ]);
 
       // Calculate metrics
-      const totalRevenue = orders.data.reduce((sum, order) => sum + order.total, 0);
+      const totalRevenue = orders.data.reduce((sum, order) => sum + order.totalAmount, 0);
       const totalOrders = orders.data.length;
       const totalProducts = products.data.length;
       const totalUsers = users.data.length;
@@ -55,7 +55,7 @@ const Dashboard = () => {
 
       const revenueByDay = orders.data.reduce((acc, order) => {
         const day = new Date(order.createdAt).toISOString().split('T')[0];
-        acc[day] = (acc[day] || 0) + order.total;
+        acc[day] = (acc[day] || 0) + order.totalAmount;
         return acc;
       }, {});
 

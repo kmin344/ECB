@@ -1,25 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/product.controller');
-const { verifyToken } = require('../middleware/auth');
+const stockController = require('../controllers/stock.controller');
+const { verifyToken, requireAdmin, requireService } = require('../middleware/auth');
 
-router.use(verifyToken);
+// Internal: order-service takes and returns stock. The gateway does not route
+// /internal paths, and a service token is required as well.
+router.post('/internal/reserve', verifyToken, requireService, stockController.reserve);
+router.post('/internal/release', verifyToken, requireService, stockController.release);
 
-// Create a new product
-router.post('/', productController.createProduct);
-
-// Retrieve all products
+// Public: shoppers browse the catalog without signing in.
 router.get('/', productController.getAllProducts);
-
-// Retrieve a single product with productId
+// Declared before /:productId so "related" isn't read as an ID.
+router.get('/related', productController.getRelatedProducts);
 router.get('/:productId', productController.getProductById);
-
-// Update a product with productId
-router.put('/:productId', productController.updateProduct);
-
-// Delete a product with productId
-router.delete('/:productId', productController.deleteProduct);
-
 router.post('/check-availability', productController.checkAvailability);
+
+// Admin: only admins change the catalog.
+router.post('/', verifyToken, requireAdmin, productController.createProduct);
+router.put('/:productId', verifyToken, requireAdmin, productController.updateProduct);
+router.delete('/:productId', verifyToken, requireAdmin, productController.deleteProduct);
 
 module.exports = router;

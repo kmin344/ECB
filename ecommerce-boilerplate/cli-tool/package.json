@@ -14,5 +14,8 @@
     "fs-extra": "^11.2.0",
     "inquirer": "^8.2.5",
     "js-yaml": "^4.1.0"
+  },
+  "bin": {
+    "ecb": "index.js"
   }
 }

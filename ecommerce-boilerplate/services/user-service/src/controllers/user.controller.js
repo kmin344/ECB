@@ -1,9 +1,9 @@
 const User = require('../models/user.model');
-const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const axios = require('axios');
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://order-service:3000';
+// order-service address. REACT_APP_API_URL is the old name, kept so existing setups still work.
+const API_URL = process.env.ORDER_SERVICE_URL || process.env.REACT_APP_API_URL || 'http://order-service:3000';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -11,13 +11,17 @@ const api = axios.create({
 
 exports.createUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, role });
+    // The model hashes the password in its pre-save hook.
+    const { username, email, password, role } = req.body;
+    const user = new User({ username, email, password, role });
     await user.save();
     res.status(201).send({ message: 'User created successfully', userId: user._id });
   } catch (error) {
-    res.status(500).send({ message: 'Error creating user', error: error.message });
+    if (error.name === 'ValidationError') {
+      return res.status(400).send({ message: error.message });
+    }
+    console.error(error);
+    res.status(500).send({ message: 'Error creating user' });
   }
 };
 
@@ -26,7 +30,8 @@ exports.getAllUsers = async (req, res) => {
     const users = await User.find({}, '-password');
     res.status(200).send(users);
   } catch (error) {
-    res.status(500).send({ message: 'Error fetching users', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error fetching users' });
   }
 };
 
@@ -38,20 +43,31 @@ exports.getUserById = async (req, res) => {
     }
     res.status(200).send(user);
   } catch (error) {
-    res.status(500).send({ message: 'Error fetching user', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error fetching user' });
   }
 };
 
 exports.updateUser = async (req, res) => {
   try {
-    const { name, email, role } = req.body;
-    const user = await User.findByIdAndUpdate(req.params.userId, { name, email, role }, { new: true, runValidators: true });
+    const { username, email, role } = req.body;
+    const changes = {};
+    if (username !== undefined) changes.username = username;
+    if (email !== undefined) changes.email = email;
+    if (role !== undefined) {
+      if (req.user.role !== 'admin') {
+        return res.status(403).send({ message: 'Only admins can change roles' });
+      }
+      changes.role = role;
+    }
+    const user = await User.findByIdAndUpdate(req.params.userId, changes, { new: true, runValidators: true }).select('-password');
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
     res.status(200).send({ message: 'User updated successfully', user });
   } catch (error) {
-    res.status(500).send({ message: 'Error updating user', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error updating user' });
   }
 };
 
@@ -63,7 +79,8 @@ exports.deleteUser = async (req, res) => {
     }
     res.status(200).send({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).send({ message: 'Error deleting user', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error deleting user' });
   }
 };
 
@@ -77,9 +94,7 @@ exports.getUserProfileWithOrders = async (req, res) => {
     }
     
     // Fetch user profile
-    console.log('Fetching user profile', userId);
     const user = await User.findById(userId, '-password');
-    console.log('User:', user);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -107,6 +122,40 @@ exports.getUserProfileWithOrders = async (req, res) => {
     res.status(200).json(userProfileWithOrders);
   } catch (error) {
     console.error('Error in getUserProfileWithOrders:', error);
-    res.status(500).json({ message: 'Error fetching user profile and orders', error: error.message });
+    res.status(500).json({ message: 'Error fetching user profile and orders' });
+  }
+};
+
+// The signed-in user's own profile
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id, '-password');
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+    res.status(200).send(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Error fetching profile' });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const changes = {};
+    for (const field of ['name', 'email', 'phone', 'address']) {
+      if (req.body[field] !== undefined) changes[field] = req.body[field];
+    }
+    const user = await User.findByIdAndUpdate(req.user.id, changes, { new: true, runValidators: true }).select('-password');
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+    res.status(200).send(user);
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).send({ message: error.message });
+    }
+    console.error(error);
+    res.status(500).send({ message: 'Error updating profile' });
   }
 };

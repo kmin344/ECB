@@ -23,18 +23,19 @@ exports.createReview = async (req, res) => {
     res.status(201).json(newReview);
   } catch (error) {
     logger.error('Error creating review:', error);
-    res.status(500).json({ message: 'Error creating review', error: error.message });
+    res.status(500).json({ message: 'Error creating review' });
   }
 };
 
 exports.getReviewsForProduct = async (req, res) => {
   try {
     const { productId } = req.params;
-    const reviews = await Review.find({ productId }).populate('userId', 'name');
+    // Users live in auth-service's database, so reviews return the user ID.
+    const reviews = await Review.find({ productId, status: { $ne: 'rejected' } });
     res.json(reviews);
   } catch (error) {
     logger.error('Error fetching reviews:', error);
-    res.status(500).json({ message: 'Error fetching reviews', error: error.message });
+    res.status(500).json({ message: 'Error fetching reviews' });
   }
 };
 
@@ -60,7 +61,7 @@ exports.updateReview = async (req, res) => {
     res.json(review);
   } catch (error) {
     logger.error('Error updating review:', error);
-    res.status(500).json({ message: 'Error updating review', error: error.message });
+    res.status(500).json({ message: 'Error updating review' });
   }
 };
 
@@ -69,7 +70,9 @@ exports.deleteReview = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
-    const review = await Review.findOneAndDelete({ _id: id, userId });
+    // Authors can delete their own review; admins can delete any review.
+    const filter = req.user.role === 'admin' ? { _id: id } : { _id: id, userId };
+    const review = await Review.findOneAndDelete(filter);
 
     if (!review) {
       return res.status(404).json({ message: 'Review not found or user not authorized' });
@@ -81,7 +84,55 @@ exports.deleteReview = async (req, res) => {
     res.json({ message: 'Review deleted successfully' });
   } catch (error) {
     logger.error('Error deleting review:', error);
-    res.status(500).json({ message: 'Error deleting review', error: error.message });
+    res.status(500).json({ message: 'Error deleting review' });
+  }
+};
+
+// Admin: every review, newest first
+exports.listReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find().sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (error) {
+    logger.error('Error listing reviews:', error);
+    res.status(500).json({ message: 'Error listing reviews' });
+  }
+};
+
+exports.getReview = async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+    res.json(review);
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching review' });
+  }
+};
+
+// Admin: approve or reject a review
+exports.updateReviewStatus = async (req, res) => {
+  try {
+    const review = await Review.findByIdAndUpdate(
+      req.params.id,
+      { status: req.body.status, updatedAt: Date.now() },
+      { new: true, runValidators: true }
+    );
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+    res.json(review);
+  } catch (error) {
+    if (error.name === 'ValidationError' || error.name === 'CastError') {
+      return res.status(400).json({ message: error.message });
+    }
+    console.error(error);
+    res.status(500).json({ message: 'Error updating review status' });
   }
 };
 

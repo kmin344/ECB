@@ -1,27 +1,37 @@
 const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const { JWT_SECRET, VERIFY_OPTIONS } = require('../config/jwt');
 
 exports.verifyToken = (req, res, next) => {
-  const authHeader = req.header('Authorization');
-  console.log('Auth Header:', authHeader);  // Add this line for debugging
+  const header = req.header('Authorization') || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
 
-  if (!authHeader) {
-    return res.status(401).json({ message: 'No auth header, authorization denied' });
-  }
-
-  const token = authHeader.split(' ')[1];
   if (!token) {
     return res.status(401).json({ message: 'No token, authorization denied' });
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, VERIFY_OPTIONS);
     req.userId = decoded.userId;
-    console.log('Decoded token:', decoded);  // Add this line for debugging
+    req.userRole = decoded.role || 'user';
     next();
   } catch (error) {
-    console.error('Token verification error:', error);  // Add this line for debugging
     res.status(401).json({ message: 'Token is not valid' });
   }
+};
+
+// Admin role comes from the token, which auth-service signs at login.
+exports.requireAdmin = (req, res, next) => {
+  if (req.userRole !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  next();
+};
+
+// Service tokens are signed by other services with the shared secret and
+// carry role "service". auth-service never puts that role in a user token.
+exports.requireService = (req, res, next) => {
+  if (req.userRole !== 'service') {
+    return res.status(403).json({ message: 'Service access required' });
+  }
+  next();
 };

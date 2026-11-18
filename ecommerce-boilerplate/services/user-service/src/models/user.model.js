@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  // Profile details edited from the storefront
+  name: { type: String, trim: true },
+  phone: { type: String, trim: true },
+  address: { type: String, trim: true },
   createdAt: {
     type: Date,
     default: Date.now
