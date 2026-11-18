@@ -1,9 +1,11 @@
 name: Smoke test (full stack)
 
-# Builds every service with docker compose and runs the end-to-end
-# smoke scripts through the API gateway. Run it manually from the
-# Actions tab.
+# Builds every image, starts the whole stack with docker compose (nginx in
+# front, as in production) and runs the end-to-end smoke test through nginx.
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -17,27 +19,24 @@ jobs:
       JWT_SECRET: ci-smoke-${{ github.run_id }}-${{ github.run_attempt }}
       ADMIN_EMAIL: smoke-admin@example.com
       ADMIN_PASSWORD: smoke-admin-password
+      API_GATEWAY_URL: http://localhost
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-      - name: Start the stack
-        # The gateway depends on every backend service, so this starts the
-        # whole API stack without the storefront, admin dashboard or nginx.
-        run: docker compose up -d --build api-gateway
-      - name: Wait for the API gateway
-        run: |
-          for i in $(seq 1 60); do
-            curl -sf http://localhost:4000/ >/dev/null && exit 0
-            sleep 5
-          done
-          echo "API gateway did not become ready" && exit 1
+      - name: Build and start the stack
+        # --wait returns when every health check passes (or fails the step).
+        run: docker compose up -d --build --wait --wait-timeout 300
       - name: Create the admin account
         run: |
-          curl -sf localhost:4000/api/auth/register -H 'content-type: application/json' \
+          curl -sf "$API_GATEWAY_URL/api/auth/register" -H 'content-type: application/json' \
             -d "{\"username\":\"smoke-admin\",\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
           docker compose exec -T auth-service node scripts/promote-admin.js "$ADMIN_EMAIL"
+      - name: Storefront and admin dashboard are served
+        run: |
+          curl -sf http://localhost/ | grep -q '<div id="root">'
+          curl -sf http://localhost/admin/ | grep -q '<div id="root">'
       - run: npm ci
       - run: npm run test:smoke
       - name: Service logs

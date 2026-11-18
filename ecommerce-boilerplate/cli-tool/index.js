@@ -5,6 +5,7 @@ const inquirer = require('inquirer');
 const fs = require('fs-extra');
 const path = require('path');
 const yaml = require('js-yaml');
+const { execSync } = require('child_process');
 
 program
   .version('1.0.0')
@@ -96,6 +97,13 @@ program
     // Create test files
     await fs.writeFile(path.join(serviceDir, 'tests/integration', `${moduleNameLower}.test.js`), createIntegrationTest(moduleNameLower));
 
+    // The Dockerfile installs with `npm ci`, which needs a lockfile.
+    try {
+      execSync('npm install --package-lock-only --no-audit --no-fund', { cwd: serviceDir, stdio: 'ignore' });
+    } catch (error) {
+      console.warn(`Could not create package-lock.json; run "npm install" in ${serviceDir} before building the image.`);
+    }
+
     // Update docker-compose.yml
     await updateDockerCompose(moduleNameLower, port);
 
@@ -111,13 +119,20 @@ program.parseAsync(process.argv).catch((error) => {
 });
 
 function createDockerfile() {
-  return `FROM node:16
-WORKDIR /usr/src/app
-COPY package*.json ./
-RUN npm install
-COPY . .
+  return `FROM node:22-alpine
+
+ENV NODE_ENV=production
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+COPY src ./src
+
+# Run as the unprivileged user that the node image provides.
+USER node
 EXPOSE 3000
-CMD [ "npm", "start" ]`;
+CMD ["node", "src/server.js"]`;
 }
 
 function createPackageJson(moduleName) {
@@ -127,20 +142,22 @@ function createPackageJson(moduleName) {
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "dev": "node --watch src/server.js",
     "test": "jest"
   },
   "dependencies": {
-    "express": "^4.17.1",
-    "mongoose": "^5.12.3",
+    "express": "^4.21.0",
+    "mongoose": "^8.24.8",
     "dotenv": "^10.0.0",
     "jsonwebtoken": "^9.0.2",
-    "winston": "^3.3.3"
+    "winston": "^3.14.2"
   },
   "devDependencies": {
-    "jest": "^27.0.6",
-    "nodemon": "^2.0.12",
-    "supertest": "^6.1.3"
+    "jest": "29.7.0",
+    "supertest": "7.3.1"
+  },
+  "jest": {
+    "testEnvironment": "node"
   }
 }`;
 }
@@ -161,12 +178,20 @@ function createGitignore() {
 
 function createAppJs(moduleName) {
   return `const express = require('express');
+const mongoose = require('mongoose');
 const ${moduleName}Routes = require('./routes/${moduleName}.routes');
 const errorMiddleware = require('./middleware/error.middleware');
 
 const app = express();
 
 app.use(express.json());
+
+// Liveness: the process answers. Readiness: MongoDB is connected as well.
+app.get('/health', (req, res) => res.json({ ok: true }));
+app.get('/ready', (req, res) => {
+  const ready = mongoose.connection.readyState === 1;
+  res.status(ready ? 200 : 503).json({ ok: ready });
+});
 
 app.use('/', ${moduleName}Routes);
 
@@ -315,17 +340,11 @@ module.exports = errorMiddleware;`;
 function createLogger() {
   return `const winston = require('winston');
 
+// Logs go to stdout only: containers collect stdout, and the app folder is read-only.
 const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' })
-  ]
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+  transports: [new winston.transports.Console()],
 });
 
 module.exports = logger;`;
@@ -335,17 +354,14 @@ function createDatabaseConfig() {
   return `const mongoose = require('mongoose');
 const logger = require('../utils/logger');
 
+// Stops the process when MongoDB cannot be reached at startup, so the
+// container platform restarts it instead of serving errors.
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      useCreateIndex: true,
-      useFindAndModify: false
-    });
+    await mongoose.connect(process.env.MONGODB_URI);
     logger.info('MongoDB connected');
   } catch (error) {
-    logger.error('MongoDB connection error:', error);
+    logger.error(\`MongoDB connection error: \${error.message}\`);
     process.exit(1);
   }
 };
@@ -381,27 +397,30 @@ async function updateDockerCompose(moduleName, port) {
   // Add the new service
   dockerCompose.services[`${moduleName}-service`] = {
     build: `./services/${moduleName}-service`,
-    volumes: [
-      `./services/${moduleName}-service:/usr/src/app`,
-      '/usr/src/app/node_modules'
-    ],
-    environment: [
-      `MONGODB_URI=mongodb://mongo:27017/${moduleName}-service`,
-      'JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}'
-    ],
-    depends_on: [
-      'mongo'
-    ]
+    restart: 'unless-stopped',
+    environment: {
+      JWT_SECRET: '${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}',
+      MONGODB_URI: `mongodb://mongo:27017/${moduleName}-service`,
+    },
+    depends_on: { mongo: { condition: 'service_healthy' } },
+    healthcheck: {
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/ready').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"],
+      interval: '10s',
+      timeout: '3s',
+      retries: 6,
+      start_period: '10s',
+    },
   };
 
-  // If a specific port was provided, add it to the service configuration
+  // If a specific port was provided, publish it on this machine only.
   if (port !== '3000') {
-    dockerCompose.services[`${moduleName}-service`].ports = [`${port}:3000`];
+    dockerCompose.services[`${moduleName}-service`].ports = [`127.0.0.1:${port}:3000`];
   }
 
-  // Update the api-gateway dependencies
-  if (dockerCompose.services['api-gateway'] && dockerCompose.services['api-gateway'].depends_on) {
-    dockerCompose.services['api-gateway'].depends_on.push(`${moduleName}-service`);
+  // The gateway waits until the new service is healthy.
+  const gateway = dockerCompose.services['api-gateway'];
+  if (gateway) {
+    gateway.depends_on = { ...(gateway.depends_on || {}), [`${moduleName}-service`]: { condition: 'service_healthy' } };
   }
 
   // Convert the updated object back to YAML

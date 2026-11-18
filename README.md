@@ -38,7 +38,7 @@ graph LR
 | Service generator CLI | Node.js, Commander, Inquirer | `ecommerce-boilerplate/cli-tool` |
 | Reverse proxy | Nginx | `ecommerce-boilerplate/nginx` |
 
-Services share one MongoDB instance but use separate databases (user-service reads the users that auth-service writes). auth-service issues JWTs, and every other service verifies them itself, so services can be deployed and scaled separately. Only the gateway, the frontends and nginx publish ports; MongoDB and Redis are reachable only inside the Compose network.
+Services share one MongoDB instance but use separate databases (user-service reads the users that auth-service writes). auth-service issues JWTs, and every other service verifies them itself, so services can be deployed and scaled separately. Only nginx (port 80) is public. The gateway is also published on `127.0.0.1:4000` for local tools; the services and MongoDB are reachable only inside the Compose network.
 
 ## Run it locally
 
@@ -52,7 +52,9 @@ docker compose up -d --build
 
 - Storefront: http://localhost
 - Admin dashboard: http://localhost/admin
-- API gateway: http://localhost:4000
+- API gateway: http://localhost/api (also http://localhost:4000 on this machine)
+
+`docker compose up --wait` returns when every health check passes.
 
 Every service refuses to start without `JWT_SECRET`, and Compose stops with an error if `.env` does not set it.
 
@@ -69,6 +71,26 @@ docker compose exec auth-service node scripts/promote-admin.js owner@example.com
 # 3. Log in again (the role is put into the token at login)
 ```
 
+## Deploy
+
+Each service, the gateway and both frontends build into their own image (`Dockerfile` in each folder): Node 22 on Alpine, production dependencies from the lockfile, running as the unprivileged `node` user. The Compose file runs the same images with health checks and restart policies.
+
+| Setting | Where | Notes |
+|---|---|---|
+| `JWT_SECRET` | every service | Required. Same value everywhere. |
+| `MONGODB_URI` | every service | One database per service; user-service uses auth-service's database. Use a MongoDB 6 or newer server (for example MongoDB Atlas). |
+| `PRODUCT_SERVICE_URL` | order-service | Default `http://product-service:3000`. |
+| `ORDER_SERVICE_URL` | payment-service, user-service | Default `http://order-service:3000`. |
+| `*_SERVICE_URL` | api-gateway | One per service, e.g. `AUTH_SERVICE_URL`. Defaults are the Compose names. |
+| `TRUST_PROXY` | api-gateway | Number of proxies in front (default 1). Used for the per-IP sign-in limit. |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STORE_URL`, `STORE_CURRENCY` | payment-service | See `.env.example`. |
+| `REACT_APP_API_URL` | frontends, build time | Only if the API is on another origin. Default `/api`. |
+
+- Health: every service answers `GET /health` (process up) and `GET /ready` (MongoDB connected, else `503`); the gateway answers `GET /health`. Point load balancers at `/ready`.
+- A service exits when MongoDB is unreachable at startup, so the platform restarts it.
+- Logs are JSON or plain lines on stdout; nothing is written to the container file system.
+- Not included: TLS (terminate it at your load balancer or put a certificate on nginx), backups, metrics.
+
 ## Add a new service with the CLI
 
 ```bash
@@ -78,7 +100,7 @@ cd ..
 ecb add-module
 ```
 
-The CLI asks for a module name, generates an Express service (routes, controller, model, JWT middleware, Dockerfile, a starter test), and registers it in both `docker-compose.yml` and the API gateway. A module named `Wishlist` is served at `/api/wishlists`.
+The CLI asks for a module name, generates an Express service (routes, controller, model, JWT middleware, health checks, Dockerfile, lockfile, a starter test), and registers it in both `docker-compose.yml` (with a health check the gateway waits for) and the API gateway. A module named `Wishlist` is served at `/api/wishlists`.
 
 ## Tests
 
@@ -105,7 +127,7 @@ The CLI asks for a module name, generates an Express service (routes, controller
   npm ci && ADMIN_EMAIL=owner@example.com ADMIN_PASSWORD=a-long-password npm run test:smoke
   ```
 
-  The same smoke test runs in GitHub Actions on demand (Actions → *Smoke test (full stack)* → Run workflow).
+  The same smoke test runs in GitHub Actions on every pull request and push to `main`: it builds every image, starts the full stack with `docker compose up --wait`, and runs the test through nginx.
 
 ## Repository notes
 
@@ -122,7 +144,6 @@ The CLI asks for a module name, generates an Express service (routes, controller
 - To load demo products into a running stack: `cd ecommerce-boilerplate && ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run seed`.
 - The per-service `scripts/seed.js` files delete their collection before they insert demo data (the auth seed adds `admin@example.com` with a known password). They refuse to run when `NODE_ENV=production`.
 - Security: catalog reads and reviews are public; everything else needs a token. Sign-in and registration are rate limited at the gateway (20 per 15 minutes per IP, `AUTH_RATE_LIMIT`). Server errors return a generic message; details go to the service log.
-- `docker-compose.yml` also starts a Redis container and passes `REDIS_URL` to cart-service, but carts are currently stored in MongoDB; Redis is reserved for a planned cart cache.
 - `scripts/scaffold/` holds the shell scripts that generated the initial project skeleton. They are kept for reference only — running them overwrites `ecommerce-boilerplate/`.
 
 ## License

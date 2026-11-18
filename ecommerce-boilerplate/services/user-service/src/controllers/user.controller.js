@@ -2,7 +2,8 @@ const User = require('../models/user.model');
 const mongoose = require('mongoose');
 const axios = require('axios');
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://order-service:3000';
+// order-service address. REACT_APP_API_URL is the old name, kept so existing setups still work.
+const API_URL = process.env.ORDER_SERVICE_URL || process.env.REACT_APP_API_URL || 'http://order-service:3000';
 
 const api = axios.create({
   baseURL: API_URL,

@@ -10,3 +10,4 @@ redis_data
 *.log
 .env
 .DS_Store
+build
