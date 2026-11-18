@@ -26,3 +26,12 @@ exports.requireAdmin = (req, res, next) => {
   }
   next();
 };
+
+// Service tokens are signed by other services with the shared secret and
+// carry role "service". auth-service never puts that role in a user token.
+exports.requireService = (req, res, next) => {
+  if (req.userRole !== 'service') {
+    return res.status(403).json({ message: 'Service access required' });
+  }
+  next();
+};

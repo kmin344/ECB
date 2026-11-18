@@ -34,3 +34,14 @@ it('does not limit catalog reads', async () => {
     expect(res.status).not.toBe(429);
   }
 });
+
+it.each([
+  '/api/products/internal/reserve',
+  '/api/products/INTERNAL/release',
+  '/api/products//internal/reserve',
+  '/api/orders/internal',
+])('does not route the internal path %s', async (path) => {
+  const res = await request(app).post(path).send({});
+  expect(res.status).toBe(404);
+  expect(res.text).toBe('Not Found');
+});

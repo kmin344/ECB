@@ -1,7 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/product.controller');
-const { verifyToken, requireAdmin } = require('../middleware/auth');
+const stockController = require('../controllers/stock.controller');
+const { verifyToken, requireAdmin, requireService } = require('../middleware/auth');
+
+// Internal: order-service takes and returns stock. The gateway does not route
+// /internal paths, and a service token is required as well.
+router.post('/internal/reserve', verifyToken, requireService, stockController.reserve);
+router.post('/internal/release', verifyToken, requireService, stockController.release);
 
 // Public: shoppers browse the catalog without signing in.
 router.get('/', productController.getAllProducts);

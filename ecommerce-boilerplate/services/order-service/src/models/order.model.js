@@ -16,6 +16,13 @@ const orderSchema = new mongoose.Schema({
       type: Number,
       required: true,
       min: 1
+    },
+    // Copied from product-service when the order is placed, so later price
+    // changes do not change what the customer owes.
+    name: String,
+    price: {
+      type: Number,
+      min: 0
     }
   }],
   totalAmount: {

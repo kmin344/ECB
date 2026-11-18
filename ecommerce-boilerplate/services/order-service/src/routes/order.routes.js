@@ -9,11 +9,12 @@ router.use(verifyToken);
 router.post('/', orderController.createOrder);
 router.get('/user/:userId', orderController.getAllOrders); // own orders (or any, for admins)
 router.get('/:orderId', orderController.getOrderById); // own order (or any, for admins)
+router.post('/:orderId/cancel', orderController.cancelOrder); // own pending order
 
 // Admin
 router.get('/', requireAdmin, orderController.listOrders);
 router.patch('/:orderId/status', requireAdmin, orderController.updateOrderStatus);
-router.put('/:orderId', requireAdmin, orderController.updateOrder);
-router.delete('/:orderId', requireAdmin, orderController.deleteOrder);
+router.put('/:orderId', requireAdmin, orderController.updateOrder); // shipping address only
+router.delete('/:orderId', requireAdmin, orderController.deleteOrder); // cancelled orders only
 
 module.exports = router;

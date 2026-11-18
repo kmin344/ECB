@@ -15,6 +15,15 @@ router.get('/', (req, res) => {
   res.send('Welcome to the E-commerce API Gateway');
 });
 
+// Service-to-service routes (for example /api/products/internal/reserve) are
+// never exposed to the internet. Matched without regard to case or extra slashes.
+router.use((req, res, next) => {
+  if (/^\/api\/[^/]+\/+internal(\/|$)/i.test(req.path)) {
+    return res.status(404).send('Not Found');
+  }
+  next();
+});
+
 // Each target can be overridden with an env var, e.g. for running locally.
 const routes = [
   ['/api/auth', process.env.AUTH_SERVICE_URL || 'http://auth-service:3000'],

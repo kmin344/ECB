@@ -91,7 +91,20 @@ async function main() {
     },
     { headers },
   );
-  if (!check('create an order', order, 201, (d) => d._id && d.user === userId)) return;
+  if (!check('create an order priced by the server', order, 201, (d) => d._id && d.user === userId && d.totalAmount === 19.98)) return;
+
+  const afterOrder = await client.get(`/api/products/${productId}`);
+  check('take stock for the order', afterOrder, 200, (d) => d.stock === 13);
+
+  const oversell = await client.post(
+    '/api/orders',
+    { products: [{ product: productId, quantity: 999 }], shippingAddress: '123 Test Street, Test City' },
+    { headers },
+  );
+  check('refuse an order larger than the stock', oversell, 409);
+
+  const internal = await client.post('/api/products/internal/reserve', { items: [] }, { headers });
+  check('hide internal routes at the gateway', internal, 404);
 
   const orders = await client.get(`/api/orders/user/${userId}`, { headers });
   check("list the user's orders", orders, 200, (d) => Array.isArray(d) && d.some((o) => o._id === order.data._id));
@@ -109,6 +122,11 @@ async function main() {
   // Cart
   const cart = await client.post('/api/carts/items', { productId, quantity: 1 }, { headers });
   check('add to cart', cart, 201, (d) => d.items && d.items.length === 1);
+
+  const cancel = await client.post(`/api/orders/${order.data._id}/cancel`, {}, { headers });
+  check('cancel the pending order', cancel, 200, (d) => d.status === 'cancelled');
+  const afterCancel = await client.get(`/api/products/${productId}`);
+  check('return the stock on cancel', afterCancel, 200, (d) => d.stock === 15);
 
   // Auth is enforced through the gateway
   const anonymous = await client.get(`/api/orders/user/${userId}`);

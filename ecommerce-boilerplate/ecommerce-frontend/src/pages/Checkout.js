@@ -22,7 +22,6 @@ const Checkout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items, total } = useSelector(state => state.cart);
-  const user = useSelector(state => state.user); // Assuming you have user state in Redux
 
   const handleShippingSubmit = (e) => {
     e.preventDefault();
@@ -36,14 +35,14 @@ const Checkout = () => {
 
   const handleOrderPlacement = async () => {
     try {
+      // The server takes the user from the token and the prices from the
+      // catalog, so only product ids, quantities and the address are sent.
       const orderData = {
-        user: user.id,
         products: items.map(item => ({
           product: item.id,
           quantity: item.quantity
         })),
-        totalAmount: total,
-        shippingAddress: `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`
+        shippingAddress: `${shippingInfo.name}, ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`
       };
 
       const response = await api.post('/orders', orderData);
