@@ -18,7 +18,7 @@ services:
       - ./services/product-service:/usr/src/app
       - /usr/src/app/node_modules
     environment:
-      - JWT_SECRET=your_jwt_secret
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
     depends_on:
       - mongo
   order-service:
@@ -27,7 +27,7 @@ services:
       - ./services/order-service:/usr/src/app
       - /usr/src/app/node_modules
     environment:
-      - JWT_SECRET=your_jwt_secret
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
     depends_on:
       - mongo
   auth-service:
@@ -36,7 +36,7 @@ services:
       - ./services/auth-service:/usr/src/app
       - /usr/src/app/node_modules
     environment:
-      - JWT_SECRET=your_jwt_secret
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
     depends_on:
       - mongo
   review-service:
@@ -46,7 +46,7 @@ services:
       - /usr/src/app/node_modules
     environment:
       - MONGODB_URI=mongodb://mongo:27017/review-service
-      - JWT_SECRET=your_jwt_secret
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
     depends_on:
       - mongo
   admin-dashboard:
@@ -87,7 +87,7 @@ services:
       - /usr/src/app/node_modules
     environment:
       - MONGODB_URI=mongodb://mongo:27017/auth-service
-      - JWT_SECRET=your_jwt_secret
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
     depends_on:
       - mongo
   cart-service:
@@ -97,7 +97,7 @@ services:
       - /usr/src/app/node_modules
     environment:
       - MONGODB_URI=mongodb://mongo:27017/cart-service
-      - JWT_SECRET=your_jwt_secret
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
       - REDIS_URL=redis://redis:6379
     depends_on:
       - mongo
@@ -113,7 +113,7 @@ services:
       - /usr/src/app/node_modules
     environment:
       - MONGODB_URI=mongodb://mongo:27017/payment-service
-      - JWT_SECRET=your_jwt_secret
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
     depends_on:
       - mongo
 

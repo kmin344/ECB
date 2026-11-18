@@ -23,7 +23,7 @@ exports.createReview = async (req, res) => {
     res.status(201).json(newReview);
   } catch (error) {
     logger.error('Error creating review:', error);
-    res.status(500).json({ message: 'Error creating review', error: error.message });
+    res.status(500).json({ message: 'Error creating review' });
   }
 };
 
@@ -35,7 +35,7 @@ exports.getReviewsForProduct = async (req, res) => {
     res.json(reviews);
   } catch (error) {
     logger.error('Error fetching reviews:', error);
-    res.status(500).json({ message: 'Error fetching reviews', error: error.message });
+    res.status(500).json({ message: 'Error fetching reviews' });
   }
 };
 
@@ -61,7 +61,7 @@ exports.updateReview = async (req, res) => {
     res.json(review);
   } catch (error) {
     logger.error('Error updating review:', error);
-    res.status(500).json({ message: 'Error updating review', error: error.message });
+    res.status(500).json({ message: 'Error updating review' });
   }
 };
 
@@ -84,7 +84,7 @@ exports.deleteReview = async (req, res) => {
     res.json({ message: 'Review deleted successfully' });
   } catch (error) {
     logger.error('Error deleting review:', error);
-    res.status(500).json({ message: 'Error deleting review', error: error.message });
+    res.status(500).json({ message: 'Error deleting review' });
   }
 };
 
@@ -95,7 +95,7 @@ exports.listReviews = async (req, res) => {
     res.json(reviews);
   } catch (error) {
     logger.error('Error listing reviews:', error);
-    res.status(500).json({ message: 'Error listing reviews', error: error.message });
+    res.status(500).json({ message: 'Error listing reviews' });
   }
 };
 
@@ -110,7 +110,8 @@ exports.getReview = async (req, res) => {
     if (error.name === 'CastError') {
       return res.status(404).json({ message: 'Review not found' });
     }
-    res.status(500).json({ message: 'Error fetching review', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching review' });
   }
 };
 
@@ -130,7 +131,8 @@ exports.updateReviewStatus = async (req, res) => {
     if (error.name === 'ValidationError' || error.name === 'CastError') {
       return res.status(400).json({ message: error.message });
     }
-    res.status(500).json({ message: 'Error updating review status', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Error updating review status' });
   }
 };
 

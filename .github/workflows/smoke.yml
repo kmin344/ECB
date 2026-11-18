@@ -12,6 +12,11 @@ jobs:
     defaults:
       run:
         working-directory: ecommerce-boilerplate
+    env:
+      # A throwaway secret for this CI run only.
+      JWT_SECRET: ci-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+      ADMIN_EMAIL: smoke-admin@example.com
+      ADMIN_PASSWORD: smoke-admin-password
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -28,6 +33,11 @@ jobs:
             sleep 5
           done
           echo "API gateway did not become ready" && exit 1
+      - name: Create the admin account
+        run: |
+          curl -sf localhost:4000/api/auth/register -H 'content-type: application/json' \
+            -d "{\"username\":\"smoke-admin\",\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
+          docker compose exec -T auth-service node scripts/promote-admin.js "$ADMIN_EMAIL"
       - run: npm ci
       - run: npm run test:smoke
       - name: Service logs

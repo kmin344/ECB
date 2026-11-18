@@ -149,7 +149,8 @@ function createEnvFile(moduleName, port) {
   return `# The container always listens on 3000; the gateway proxies to it.
 PORT=3000
 MONGODB_URI=mongodb://mongo:27017/${moduleName}-service
-JWT_SECRET=your_jwt_secret`;
+# Set the same secret as the other services (see ../../.env.example).
+JWT_SECRET=`;
 }
 
 function createGitignore() {
@@ -276,10 +277,15 @@ exports.delete = async (req, res, next) => {
 function createAuthMiddleware() {
   return `const jwt = require('jsonwebtoken');
 
+// A missing secret stops the service at startup instead of failing every request.
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is not set');
+}
+
 module.exports = (req, res, next) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     req.user = { id: decodedToken.userId };
     next();
   } catch (error) {
@@ -291,19 +297,15 @@ module.exports = (req, res, next) => {
 function createErrorMiddleware() {
   return `const logger = require('../utils/logger');
 
+// Logs every error. Clients get the message only for their own mistakes (4xx).
 const errorMiddleware = (err, req, res, next) => {
-  // Log the error
-  logger.error(err.stack);
-
-  // Determine the status code
   const statusCode = err.statusCode || 500;
+  logger.error(err.stack || String(err));
 
-  // Send the error response
   res.status(statusCode).json({
     status: 'error',
-    statusCode: statusCode,
-    message: err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    statusCode,
+    message: statusCode < 500 ? err.message : 'Internal Server Error',
   });
 };
 
@@ -385,7 +387,7 @@ async function updateDockerCompose(moduleName, port) {
     ],
     environment: [
       `MONGODB_URI=mongodb://mongo:27017/${moduleName}-service`,
-      'JWT_SECRET=your_jwt_secret'
+      'JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}'
     ],
     depends_on: [
       'mongo'

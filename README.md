@@ -43,6 +43,7 @@ Requires Docker.
 
 ```bash
 cd ecommerce-boilerplate
+cp .env.example .env            # set JWT_SECRET, e.g. openssl rand -hex 32
 docker compose up -d --build
 ```
 
@@ -50,7 +51,20 @@ docker compose up -d --build
 - Admin dashboard: http://localhost/admin
 - API gateway: http://localhost:4000
 
-`JWT_SECRET` in `docker-compose.yml` is a placeholder for local use. Set a real secret before deploying anywhere.
+Every service refuses to start without `JWT_SECRET`, and Compose stops with an error if `.env` does not set it.
+
+### First admin
+
+Only admins can create, change or delete products. To make the first admin:
+
+```bash
+# 1. Register the account in the storefront, or:
+curl -s localhost:4000/api/auth/register -H 'content-type: application/json' \
+  -d '{"username":"owner","email":"owner@example.com","password":"a-long-password"}'
+# 2. Give it the admin role
+docker compose exec auth-service node scripts/promote-admin.js owner@example.com
+# 3. Log in again (the role is put into the token at login)
+```
 
 ## Add a new service with the CLI
 
@@ -70,10 +84,12 @@ The CLI asks for a module name, generates an Express service (routes, controller
   - user-service: own-profile routes and role-based access (listing, creating, deleting and changing roles is admin-only)
   - order-service: customers see only their own orders; listing all orders and changing status is admin-only
   - review-service: moderation (admin list, approve/reject, delete) and hiding rejected reviews from the storefront
-  - product-service: related products
+  - product-service: related products; public reads, admin-only changes, rejected forged and unsigned tokens
+  - auth-service: input checks, query-operator rejection, role never taken from the request, same answer for wrong password and unknown email
+  - api-gateway: the sign-in rate limit
 
   ```bash
-  cd ecommerce-boilerplate/services/order-service   # or cart, user, product, review
+  cd ecommerce-boilerplate/services/order-service   # or another service, or api-gateway
   npm ci && npx jest
   ```
 
@@ -81,7 +97,7 @@ The CLI asks for a module name, generates an Express service (routes, controller
 
   ```bash
   cd ecommerce-boilerplate
-  npm ci && npm run test:smoke
+  npm ci && ADMIN_EMAIL=owner@example.com ADMIN_PASSWORD=a-long-password npm run test:smoke
   ```
 
   The same smoke test runs in GitHub Actions on demand (Actions → *Smoke test (full stack)* → Run workflow).
@@ -89,12 +105,14 @@ The CLI asks for a module name, generates an Express service (routes, controller
 ## Repository notes
 
 - `ecommerce-boilerplate/admin-dashboard-angular` is an Angular port of the admin dashboard. It is not wired into `docker-compose.yml`; the React dashboard is the one that runs.
-- auth, product and order are covered by the smoke test; review and payment have no automated tests yet.
-- Roles are stored on the user record and included in the JWT that auth-service signs, so order-service and review-service can check for admins without reading the users database. After changing a role, the user has to log in again. Promote the first admin directly in MongoDB (`role: "admin"`).
+- auth, product and order are covered by the smoke test; payment has no automated tests yet.
+- Roles are stored on the user record and included in the JWT that auth-service signs, so order-service and review-service can check for admins without reading the users database. After changing a role, the user has to log in again. See "First admin" above.
 - Each service owns its data, so orders and reviews reference users and products by ID; the admin dashboard shows those IDs.
 - The storefront keeps the cart in the browser (Redux); cart-service exposes the same operations as an API.
 - Payments are simulated: payment-service marks a payment as succeeded or failed at random, and checkout does not call it yet.
-- To load demo products into a running stack: `cd ecommerce-boilerplate && npm run seed`.
+- To load demo products into a running stack: `cd ecommerce-boilerplate && ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run seed`.
+- The per-service `scripts/seed.js` files delete their collection before they insert demo data (the auth seed adds `admin@example.com` with a known password). They refuse to run when `NODE_ENV=production`.
+- Security: catalog reads and reviews are public; everything else needs a token. Sign-in and registration are rate limited at the gateway (20 per 15 minutes per IP, `AUTH_RATE_LIMIT`). Server errors return a generic message; details go to the service log.
 - `docker-compose.yml` also starts a Redis container and passes `REDIS_URL` to cart-service, but carts are currently stored in MongoDB; Redis is reserved for a planned cart cache.
 - `scripts/scaffold/` holds the shell scripts that generated the initial project skeleton. They are kept for reference only — running them overwrites `ecommerce-boilerplate/`.
 

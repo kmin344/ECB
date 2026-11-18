@@ -19,7 +19,8 @@ exports.createUser = async (req, res) => {
     if (error.name === 'ValidationError') {
       return res.status(400).send({ message: error.message });
     }
-    res.status(500).send({ message: 'Error creating user', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error creating user' });
   }
 };
 
@@ -28,7 +29,8 @@ exports.getAllUsers = async (req, res) => {
     const users = await User.find({}, '-password');
     res.status(200).send(users);
   } catch (error) {
-    res.status(500).send({ message: 'Error fetching users', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error fetching users' });
   }
 };
 
@@ -40,7 +42,8 @@ exports.getUserById = async (req, res) => {
     }
     res.status(200).send(user);
   } catch (error) {
-    res.status(500).send({ message: 'Error fetching user', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error fetching user' });
   }
 };
 
@@ -62,7 +65,8 @@ exports.updateUser = async (req, res) => {
     }
     res.status(200).send({ message: 'User updated successfully', user });
   } catch (error) {
-    res.status(500).send({ message: 'Error updating user', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error updating user' });
   }
 };
 
@@ -74,7 +78,8 @@ exports.deleteUser = async (req, res) => {
     }
     res.status(200).send({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).send({ message: 'Error deleting user', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error deleting user' });
   }
 };
 
@@ -116,7 +121,7 @@ exports.getUserProfileWithOrders = async (req, res) => {
     res.status(200).json(userProfileWithOrders);
   } catch (error) {
     console.error('Error in getUserProfileWithOrders:', error);
-    res.status(500).json({ message: 'Error fetching user profile and orders', error: error.message });
+    res.status(500).json({ message: 'Error fetching user profile and orders' });
   }
 };
 
@@ -129,7 +134,8 @@ exports.getProfile = async (req, res) => {
     }
     res.status(200).send(user);
   } catch (error) {
-    res.status(500).send({ message: 'Error fetching profile', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error fetching profile' });
   }
 };
 
@@ -148,6 +154,7 @@ exports.updateProfile = async (req, res) => {
     if (error.name === 'ValidationError') {
       return res.status(400).send({ message: error.message });
     }
-    res.status(500).send({ message: 'Error updating profile', error: error.message });
+    console.error(error);
+    res.status(500).send({ message: 'Error updating profile' });
   }
 };

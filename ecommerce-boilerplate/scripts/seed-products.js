@@ -1,5 +1,6 @@
-// Seeds a small demo catalog through the API gateway.
-// Usage (stack running): npm run seed
+// Seeds a small demo catalog through the API gateway. Only admins can create
+// products, so the script logs in with an admin account (see README, "First admin").
+// Usage (stack running): ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run seed
 const axios = require('axios');
 
 const API = process.env.API_GATEWAY_URL || 'http://localhost:4000';
@@ -13,10 +14,11 @@ const products = [
 ];
 
 async function getToken() {
-  const id = Date.now();
-  const credentials = { email: `seed-${id}@example.com`, password: `seed-${id}` };
-  await axios.post(`${API}/api/auth/register`, { username: `seed-${id}`, ...credentials });
-  const { data } = await axios.post(`${API}/api/auth/login`, credentials);
+  const { ADMIN_EMAIL: email, ADMIN_PASSWORD: password } = process.env;
+  if (!email || !password) {
+    throw new Error('Set ADMIN_EMAIL and ADMIN_PASSWORD to an admin account');
+  }
+  const { data } = await axios.post(`${API}/api/auth/login`, { email, password });
   return data.token;
 }
 

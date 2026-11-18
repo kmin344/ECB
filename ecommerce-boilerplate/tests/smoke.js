@@ -1,6 +1,7 @@
 // End-to-end smoke test through the API gateway.
-// Start the stack first (docker compose up -d --build api-gateway), then:
-//   npm run test:smoke
+// Start the stack first (docker compose up -d --build api-gateway), make an
+// admin account (README, "First admin"), then:
+//   ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run test:smoke
 const axios = require('axios');
 
 const API = process.env.API_GATEWAY_URL || 'http://localhost:4000';
@@ -30,7 +31,24 @@ async function main() {
   const userId = login.data.user._id;
   const headers = { Authorization: `Bearer ${login.data.token}` };
 
+  const weak = await client.post('/api/auth/register', { username: `weak-${id}`, email: `weak-${id}@example.com`, password: 'short' });
+  check('reject a short password', weak, 400);
+
+  const adminLogin = await client.post('/api/auth/login', {
+    email: process.env.ADMIN_EMAIL,
+    password: process.env.ADMIN_PASSWORD,
+  });
+  if (!check('log in as admin (ADMIN_EMAIL, ADMIN_PASSWORD)', adminLogin, 200, (d) => d.token)) return;
+  const adminHeaders = { Authorization: `Bearer ${adminLogin.data.token}` };
+
   // Products
+  const customerCreate = await client.post(
+    '/api/products',
+    { name: 'Not allowed', description: 'x', thumbnail: 'x', price: 1, stock: 1, category: 'x' },
+    { headers },
+  );
+  check('block customers from creating products', customerCreate, 403);
+
   const create = await client.post(
     '/api/products',
     {
@@ -41,27 +59,25 @@ async function main() {
       stock: 10,
       category: 'Smoke Tests',
     },
-    { headers },
+    { headers: adminHeaders },
   );
   if (!check('create a product', create, 201, (d) => d._id && d.stock === 10)) return;
   const productId = create.data._id;
 
-  const list = await client.get('/api/products', { headers });
-  check('list products', list, 200, (d) => Array.isArray(d) && d.some((p) => p._id === productId));
+  const list = await client.get('/api/products');
+  check('list products without signing in', list, 200, (d) => Array.isArray(d) && d.some((p) => p._id === productId));
 
-  const update = await client.put(`/api/products/${productId}`, { stock: 15 }, { headers });
+  const update = await client.put(`/api/products/${productId}`, { stock: 15 }, { headers: adminHeaders });
   check('update only the stock', update, 200, (d) => d.stock === 15 && d.name === 'Smoke Test Product');
 
   const related = await client.get('/api/products/related', {
     params: { productId, category: 'Smoke Tests' },
-    headers,
   });
   check('get related products', related, 200, (d) => Array.isArray(d) && !d.some((p) => p._id === productId));
 
   const availability = await client.post(
     '/api/products/check-availability',
     { products: [{ productId, quantity: 5 }] },
-    { headers },
   );
   check('check availability', availability, 200, (d) => d[0] && d[0].available === true);
 

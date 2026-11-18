@@ -1,18 +1,11 @@
 const Order = require('../models/order.model');
-const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
 // Create and Save a new Order
 exports.createOrder = async (req, res) => {
   try {
     const { products, totalAmount, shippingAddress } = req.body;
 
-    const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, JWT_SECRET);
-
     const newOrder = new Order({
-      user: decodedToken.userId,
+      user: req.userId, // set by verifyToken
       products,
       totalAmount,
       shippingAddress
@@ -25,7 +18,8 @@ exports.createOrder = async (req, res) => {
     if (error.name === 'ValidationError' || error.name === 'CastError') {
       return res.status(400).json({ message: error.message });
     }
-    res.status(500).json({ message: 'Error creating order', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Error creating order' });
   }
 };
 
@@ -38,7 +32,8 @@ exports.listOrders = async (req, res) => {
     const orders = await Order.find().sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving orders', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Error retrieving orders' });
   }
 };
 
@@ -63,8 +58,9 @@ exports.getAllOrders = async (req, res) => {
       // .populate('products.product', 'name price'); // Populate product data
     res.json(orders);
   } catch (error) {
+    console.error(error);
     res.status(500).send({
-      message: error.message || "Some error occurred while retrieving orders."
+      message: "Some error occurred while retrieving orders."
     });
   }
 };
@@ -87,6 +83,7 @@ exports.getOrderById = async (req, res) => {
         message: "Order not found with id " + req.params.orderId
       });
     }
+    console.error(error);
     return res.status(500).send({
       message: "Error retrieving order with id " + req.params.orderId
     });
@@ -115,6 +112,7 @@ exports.updateOrder = async (req, res) => {
         message: "Order not found with id " + req.params.orderId
       });
     }
+    console.error(error);
     return res.status(500).send({
       message: "Error updating order with id " + req.params.orderId
     });
@@ -138,7 +136,8 @@ exports.updateOrderStatus = async (req, res) => {
     if (error.name === 'ValidationError' || error.name === 'CastError') {
       return res.status(400).json({ message: error.message });
     }
-    res.status(500).json({ message: 'Error updating order status', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Error updating order status' });
   }
 };
 
@@ -157,6 +156,7 @@ exports.deleteOrder = async (req, res) => {
         message: "Order not found with id " + req.params.orderId
       });
     }
+    console.error(error);
     return res.status(500).send({
       message: "Could not delete order with id " + req.params.orderId
     });

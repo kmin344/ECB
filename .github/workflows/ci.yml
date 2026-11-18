@@ -11,16 +11,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [cart-service, user-service, order-service, product-service, review-service]
+        path:
+          - api-gateway
+          - services/auth-service
+          - services/cart-service
+          - services/user-service
+          - services/order-service
+          - services/product-service
+          - services/review-service
     defaults:
       run:
-        working-directory: ecommerce-boilerplate/services/${{ matrix.service }}
+        working-directory: ecommerce-boilerplate/${{ matrix.path }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: ecommerce-boilerplate/services/${{ matrix.service }}/package-lock.json
+          cache-dependency-path: ecommerce-boilerplate/${{ matrix.path }}/package-lock.json
       - run: npm ci
       - run: npx jest --ci

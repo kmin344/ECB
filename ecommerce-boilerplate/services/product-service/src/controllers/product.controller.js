@@ -21,8 +21,9 @@ exports.createProduct = async (req, res) => {
     if (error.name === 'ValidationError') {
       return res.status(400).send({ message: error.message });
     }
+    console.error(error);
     res.status(500).send({
-      message: error.message || "Some error occurred while creating the Product."
+      message: "Some error occurred while creating the Product."
     });
   }
 };
@@ -33,8 +34,9 @@ exports.getAllProducts = async (req, res) => {
     const products = await Product.find();
     res.send(products);
   } catch (error) {
+    console.error(error);
     res.status(500).send({
-      message: error.message || "Some error occurred while retrieving products."
+      message: "Some error occurred while retrieving products."
     });
   }
 };
@@ -55,6 +57,7 @@ exports.getProductById = async (req, res) => {
         message: "Product not found with id " + req.params.productId
       });
     }
+    console.error(error);
     return res.status(500).send({
       message: "Error retrieving product with id " + req.params.productId
     });
@@ -88,6 +91,7 @@ exports.updateProduct = async (req, res) => {
         message: "Product not found with id " + req.params.productId
       });
     }
+    console.error(error);
     return res.status(500).send({
       message: "Error updating product with id " + req.params.productId
     });
@@ -110,6 +114,7 @@ exports.deleteProduct = async (req, res) => {
         message: "Product not found with id " + req.params.productId
       });
     }
+    console.error(error);
     return res.status(500).send({
       message: "Could not delete product with id " + req.params.productId
     });
@@ -128,14 +133,16 @@ exports.checkAvailability = async (req, res) => {
     }));
     res.json(availability);
   } catch (error) {
-    res.status(500).json({ message: 'Error checking product availability', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Error checking product availability' });
   }
 };
 
 exports.getRelatedProducts = async (req, res) => {
   try {
     const { productId, category } = req.query;
-    if (!category) {
+    // A query string such as ?category[$ne]=x arrives as an object; accept text only.
+    if (typeof category !== 'string' || category === '') {
       return res.status(400).json({ message: 'category is required' });
     }
     const filter = { category };
@@ -145,6 +152,7 @@ exports.getRelatedProducts = async (req, res) => {
     const products = await Product.find(filter).sort({ averageRating: -1 }).limit(4);
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching related products', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching related products' });
   }
 };
