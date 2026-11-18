@@ -17,6 +17,7 @@ jobs:
           - services/cart-service
           - services/user-service
           - services/order-service
+          - services/payment-service
           - services/product-service
           - services/review-service
     defaults:

@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/order.controller');
-const { verifyToken, requireAdmin } = require('../middleware/auth');
+const { verifyToken, requireAdmin, requireService } = require('../middleware/auth');
 
 router.use(verifyToken);
+
+// Internal: payment-service reads orders and reports payments. The gateway
+// does not route /internal paths, and a service token is required as well.
+router.get('/internal/orders/:orderId', requireService, orderController.getOrderForService);
+router.post('/internal/orders/:orderId/paid', requireService, orderController.markPaid);
 
 // Customers
 router.post('/', orderController.createOrder);

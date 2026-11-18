@@ -114,6 +114,10 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongo:27017/payment-service
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STORE_URL=${STORE_URL:-http://localhost}
+      - STORE_CURRENCY=${STORE_CURRENCY:-usd}
     depends_on:
       - mongo
 

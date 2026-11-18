@@ -40,6 +40,8 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  // Set when payment-service reports a successful payment.
+  paidAt: Date,
   createdAt: {
     type: Date,
     default: Date.now

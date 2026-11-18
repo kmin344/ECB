@@ -225,3 +225,41 @@ describe('reading orders', () => {
     await request(app).get(`/${ORDER_ID}`).set(as(BOB, 'admin')).expect(200);
   });
 });
+
+describe('internal routes for payment-service', () => {
+  const SERVICE = { Authorization: `Bearer ${jwt.sign({ role: 'service', service: 'payment-service' }, JWT_SECRET)}` };
+
+  it('reads any order with a service token, and refuses users and admins', async () => {
+    await request(app).get(`/internal/orders/${ORDER_ID}`).set(SERVICE).expect(200);
+    await request(app).get(`/internal/orders/${ORDER_ID}`).set(as(BOB)).expect(403);
+    await request(app).get(`/internal/orders/${ORDER_ID}`).set(as(BOB, 'admin')).expect(403);
+  });
+
+  it('moves a pending order to processing when it is paid', async () => {
+    const res = await request(app).post(`/internal/orders/${ORDER_ID}/paid`).set(SERVICE).expect(200);
+    expect(Order.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: ORDER_ID, status: 'pending' },
+      expect.objectContaining({ status: 'processing', paidAt: expect.any(Number) }),
+      { new: true },
+    );
+    expect(res.body.status).toBe('processing');
+  });
+
+  it('answers 200 again for an order that is already paid', async () => {
+    Order.findOneAndUpdate.mockResolvedValue(null);
+    Order.findById.mockResolvedValue({ ...order('processing'), paidAt: new Date() });
+    await request(app).post(`/internal/orders/${ORDER_ID}/paid`).set(SERVICE).expect(200);
+  });
+
+  it('answers 409 for a cancelled order, so the payment is refunded', async () => {
+    Order.findOneAndUpdate.mockResolvedValue(null);
+    Order.findById.mockResolvedValue(order('cancelled'));
+    const res = await request(app).post(`/internal/orders/${ORDER_ID}/paid`).set(SERVICE).expect(409);
+    expect(res.body.status).toBe('cancelled');
+  });
+
+  it('refuses a user who tries to mark an order paid', async () => {
+    await request(app).post(`/internal/orders/${ORDER_ID}/paid`).set(as(ALICE)).expect(403);
+    expect(Order.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+});

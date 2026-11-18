@@ -1,14 +1,17 @@
-// src/routes/payment.routes.js
 const express = require('express');
-const paymentController = require('../controllers/payment.controller');
 const authMiddleware = require('../middleware/auth.middleware');
 
-const router = express.Router();
+module.exports = function paymentRoutes(controller) {
+  const router = express.Router();
 
-router.use(authMiddleware);
+  // Stripe calls this without a user token; the signature proves the sender.
+  // express.raw keeps the exact bytes that Stripe signed.
+  router.post('/webhook', express.raw({ type: 'application/json', limit: '1mb' }), controller.webhook);
 
-router.post('/process', paymentController.processPayment);
-router.get('/:id', paymentController.getPaymentStatus);
-router.get('/order/:orderId', paymentController.getPaymentsByOrder);
+  router.use(authMiddleware);
+  router.post('/checkout', express.json({ limit: '10kb' }), controller.checkout);
+  router.get('/order/:orderId', controller.getPaymentsForOrder);
+  router.get('/:id', controller.getPayment);
 
-module.exports = router;
+  return router;
+};

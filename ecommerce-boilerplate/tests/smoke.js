@@ -103,6 +103,13 @@ async function main() {
   );
   check('refuse an order larger than the stock', oversell, 409);
 
+  // 503 when the stack has no Stripe keys (as in CI), 201 with a Stripe URL when it has them.
+  const pay = await client.post('/api/payments/checkout', { orderId: order.data._id }, { headers });
+  check('start checkout (503 without Stripe keys)', pay, pay.status === 503 ? 503 : 201, (d) => pay.status === 503 || /^https:\/\//.test(d.url));
+
+  const forged = await client.post('/api/payments/webhook', '{}', { headers: { 'content-type': 'application/json', 'stripe-signature': 't=1,v1=00' } });
+  check('refuse an unsigned payment webhook', forged, forged.status === 503 ? 503 : 400);
+
   const internal = await client.post('/api/products/internal/reserve', { items: [] }, { headers });
   check('hide internal routes at the gateway', internal, 404);
 

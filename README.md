@@ -24,6 +24,9 @@ graph LR
     GW --> Review[review-service]
     GW --> User[user-service]
     Auth & Product & Order & Cart & Payment & Review & User --> Mongo[(MongoDB)]
+    Order -.->|reserve / release stock| Product
+    Payment -.->|read order, mark paid| Order
+    Payment <-.->|Checkout session, webhook| Stripe[Stripe]
 ```
 
 | Component | Stack | Path |
@@ -86,7 +89,9 @@ The CLI asks for a module name, generates an Express service (routes, controller
   - review-service: moderation (admin list, approve/reject, delete) and hiding rejected reviews from the storefront
   - product-service: related products; public reads, admin-only changes, rejected forged and unsigned tokens
   - auth-service: input checks, query-operator rejection, role never taken from the request, same answer for wrong password and unknown email
-  - api-gateway: the sign-in rate limit
+  - api-gateway: the sign-in rate limit and the internal-path block
+  - payment-service (on a real MongoDB via `mongodb-memory-server`, with Stripe and order-service faked): checkout from stored prices, webhook signatures, repeated events, retries, automatic refunds
+  - product-service stock reservation (on a real MongoDB): 10 concurrent orders for the last unit, 1 succeeds
 
   ```bash
   cd ecommerce-boilerplate/services/order-service   # or another service, or api-gateway
@@ -105,14 +110,15 @@ The CLI asks for a module name, generates an Express service (routes, controller
 ## Repository notes
 
 - `ecommerce-boilerplate/admin-dashboard-angular` is an Angular port of the admin dashboard. It is not wired into `docker-compose.yml`; the React dashboard is the one that runs.
-- auth, product and order are covered by the smoke test; payment has no automated tests yet.
+- auth, product, order and the payment entry points are covered by the smoke test.
 - Roles are stored on the user record and included in the JWT that auth-service signs, so order-service and review-service can check for admins without reading the users database. After changing a role, the user has to log in again. See "First admin" above.
 - Each service owns its data, so orders and reviews reference users and products by ID; the admin dashboard shows those IDs.
 - Orders: order-service ignores any total the client sends. It asks product-service to reserve stock and uses the prices it returns (stored on each order line). Each product's stock is taken with one atomic MongoDB update that matches only while enough stock is left, so concurrent orders cannot oversell; if one line is short, the lines already taken are given back and the order fails with `409`. Cancelling (admin, or the customer while the order is `pending`, via `POST /api/orders/:id/cancel`) returns the stock once. Status rules: `cancelled` and `delivered` are final, and `shipped` can only become `delivered`. Admins can edit only the shipping address and can delete only cancelled orders.
 - product-service's `/internal/reserve` and `/internal/release` accept only service tokens (`role: "service"`, signed with `JWT_SECRET`), and the gateway does not route any `/internal` path.
 - Limits: MongoDB transactions are not used (they need a replica set). If order-service stops between taking stock and saving the order, that stock is not returned automatically; the log names the order and items.
 - The storefront keeps the cart in the browser (Redux); cart-service exposes the same operations as an API.
-- Payments are simulated: payment-service marks a payment as succeeded or failed at random, and checkout does not call it yet.
+- Payments use [Stripe Checkout](https://docs.stripe.com/payments/checkout): the storefront places the order, then `POST /api/payments/checkout` returns the URL of Stripe's hosted payment page. Card details never reach this store. The line prices come from the stored order. Stripe's webhook (`POST /api/payments/webhook`, events `checkout.session.*`) is checked against `STRIPE_WEBHOOK_SECRET` over the raw body (5-minute tolerance) and moves the order from `pending` to `processing`. Webhooks are safe to repeat: if order-service is down, the webhook answers `500` and Stripe retries. A payment that arrives after the order was cancelled, or a second payment for an already-paid order, is refunded automatically. Without `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, checkout answers `503` and the rest of the store works. See `.env.example`.
+- Payment limits: cancelling an order that is already paid (admin only) returns the stock but does not refund the payment; refund it in the Stripe dashboard. Prices are in `STORE_CURRENCY` for the whole store.
 - To load demo products into a running stack: `cd ecommerce-boilerplate && ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run seed`.
 - The per-service `scripts/seed.js` files delete their collection before they insert demo data (the auth seed adds `admin@example.com` with a known password). They refuse to run when `NODE_ENV=production`.
 - Security: catalog reads and reviews are public; everything else needs a token. Sign-in and registration are rate limited at the gateway (20 per 15 minutes per IP, `AUTH_RATE_LIMIT`). Server errors return a generic message; details go to the service log.

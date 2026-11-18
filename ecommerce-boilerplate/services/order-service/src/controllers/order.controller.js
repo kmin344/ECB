@@ -224,3 +224,39 @@ exports.deleteOrder = async (req, res) => {
     res.status(500).json({ message: 'Could not delete order with id ' + req.params.orderId });
   }
 };
+
+// Internal: the order as payment-service needs it (any user's order).
+exports.getOrderForService = async (req, res) => {
+  try {
+    const order = mongoose.Types.ObjectId.isValid(req.params.orderId) ? await Order.findById(req.params.orderId) : null;
+    if (!order) return notFound(res, req.params.orderId);
+    res.json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error retrieving order with id ' + req.params.orderId });
+  }
+};
+
+// Internal: payment-service reports a successful payment. Moves a pending
+// order to processing. Safe to repeat: a paid order answers 200 again.
+// A cancelled order answers 409 so payment-service can refund the payment.
+exports.markPaid = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.orderId)) return notFound(res, req.params.orderId);
+    const now = Date.now();
+    const updated = await Order.findOneAndUpdate(
+      { _id: req.params.orderId, status: 'pending' },
+      { status: 'processing', paidAt: now, updatedAt: now },
+      { new: true },
+    );
+    if (updated) return res.json(updated);
+
+    const order = await Order.findById(req.params.orderId);
+    if (!order) return notFound(res, req.params.orderId);
+    if (order.paidAt) return res.json(order); // already recorded
+    return res.status(409).json({ message: `An order that is ${order.status} cannot be paid`, status: order.status });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error recording payment' });
+  }
+};
